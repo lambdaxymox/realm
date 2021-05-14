@@ -1,3 +1,6 @@
+mod entity;
+
+
 #[cfg(test)]
 mod tests {
     #[test]
