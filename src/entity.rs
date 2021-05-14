@@ -64,5 +64,17 @@ impl Default for EntityAllocator {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
+
+    #[test]
+    fn test_allocate_deallocate_from_empty_allocator() {
+        let mut allocator = EntityAllocator::new();
+        let expected = allocator.allocate();
+        allocator.deallocate(expected);
+        let result = allocator.allocate();
+
+        assert_eq!(result, expected);
+    }
 }
+
