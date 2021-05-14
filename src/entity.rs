@@ -48,7 +48,10 @@ impl EntityAllocator {
     }
 
     pub fn deallocate(&mut self, entity: Entity) {
-        self.available_entities.push_back(entity)
+        if entity.id() < self.max_id {
+            // The entity has been allocated.
+            self.available_entities.push_back(entity)
+        }
     }
 }
 
