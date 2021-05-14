@@ -8,7 +8,20 @@ use std::fmt;
 #[repr(transparent)]
 pub struct Entity(u64);
 
+impl Entity {
+    #[inline]
+    pub fn id(self) -> u64 {
+        self.0
+    }
+}
 
+impl fmt::Display for Entity {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "{}", self.0)
+    }
+}
+
+#[derive(Debug)]
 pub struct EntityAllocator {
     max_id: u64,
     available_entities: VecDeque<Entity>,
@@ -45,3 +58,8 @@ impl Default for EntityAllocator {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+
+}
