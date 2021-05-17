@@ -1,5 +1,6 @@
 mod entity;
 mod component;
+mod storage;
 
 
 #[cfg(test)]
