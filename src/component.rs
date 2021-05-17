@@ -35,6 +35,7 @@ struct EntityLocationMap {
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
 struct EntityType {
+    name: Option<String>,
     components: Vec<ComponentTypeIndex>,
     constructors: Vec<fn() -> Box<dyn UnsafeComponentStorage>>,
 }
