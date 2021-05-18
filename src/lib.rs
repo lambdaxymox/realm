@@ -2,6 +2,8 @@ mod entity;
 mod component;
 mod storage;
 
+pub mod world;
+
 
 #[cfg(test)]
 mod tests {

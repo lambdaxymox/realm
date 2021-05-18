@@ -5,17 +5,18 @@ use crate::component::{
     Component,
     ComponentTypeIndex,
 };
-use std::any::{
-    TypeId,
+use std::rc::{
+    Rc,
 };
-use std::rc::Rc;
-use std::collections::HashMap;
+use std::collections::{
+    HashMap,
+};
 use std::ops;
 
 
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
-struct EntityType {
+pub struct EntityType {
     name: Option<String>,
     components: Vec<ComponentTypeIndex>,
     constructors: Vec<fn() -> Box<dyn UnsafeComponentStorage>>,
@@ -23,7 +24,7 @@ struct EntityType {
 
 /// A collection of entities with the same layout. We create a new map every time
 /// a new entity layout is registered.
-struct EntityTypeMap {
+pub struct EntityTypeMap {
     index: EntityTypeIndex,
     entities: Vec<Entity>,
     layout: Rc<EntityType>,
@@ -69,7 +70,7 @@ impl ComponentIndex {
 }
 
 /// The location of an entity and one of its components.
-struct EntityLocation {
+pub struct EntityLocation {
     type_id: EntityTypeIndex, component_id: ComponentIndex
 }
 
@@ -86,7 +87,7 @@ impl EntityLocation {
 }
 
 /// A map of active entities to the locations of their components.
-struct EntityLocationMap {
+pub struct EntityLocationMap {
     locations: HashMap<Entity, EntityTypeIndex>,
 }
 
