@@ -29,13 +29,43 @@ struct EntityTypeMap {
     layout: Rc<EntityType>,
 }
 
-struct EntityTypeIndex {
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EntityTypeIndex {
     id: usize,
 }
 
+impl EntityTypeIndex {
+    #[inline]
+    fn new(id: usize) -> EntityTypeIndex {
+        EntityTypeIndex {
+            id: id,
+        }
+    }
+
+    #[inline]
+    fn id(self) -> usize {
+        self.id
+    }
+}
+
 /// The index of a component.
-struct ComponentIndex {
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ComponentIndex {
     id: usize,
+}
+
+impl ComponentIndex {
+    #[inline]
+    fn new(id: usize) -> ComponentIndex {
+        ComponentIndex {
+            id: id,
+        }
+    }
+
+    #[inline]
+    fn id(self) -> usize {
+        self.id
+    }
 }
 
 /// The location of an entity and one of its components.
@@ -58,6 +88,10 @@ impl EntityLocation {
 /// A map of active entities to the locations of their components.
 struct EntityLocationMap {
     locations: HashMap<Entity, EntityTypeIndex>,
+}
+
+impl EntityLocationMap {
+    
 }
 
 
