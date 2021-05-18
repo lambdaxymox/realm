@@ -22,6 +22,15 @@ struct ComponentSet {
     data: HashMap<ComponentTypeIndex, Box<dyn UnsafeComponentStorage>>,
 }
 
+impl ComponentSet {
+    fn new() -> Self {
+        Self {
+            data: HashMap::new(),
+        }
+    }
+}
+
+
 /// Where all the data is grouped together.
 struct World {
     entities: EntityLocationMap,
@@ -32,7 +41,12 @@ struct World {
 
 impl World {
     pub fn new() -> World {
-        todo!()
+        World {
+            entities: EntityLocationMap::new(),
+            entity_types: Vec::new(),
+            entity_allocator: EntityAllocator::new(),
+            components: ComponentSet::new()
+        }
     }
 
     pub fn is_empty(&self) -> bool {

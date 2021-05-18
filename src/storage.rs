@@ -93,7 +93,7 @@ pub struct EntityLocationMap {
 }
 
 impl EntityLocationMap {
-    fn new() -> EntityLocationMap {
+    pub(crate) fn new() -> EntityLocationMap {
         EntityLocationMap {
             locations: HashMap::new(),
         }
