@@ -17,7 +17,6 @@ use std::ops;
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
 pub struct EntityType {
-    name: Option<String>,
     components: Vec<ComponentTypeIndex>,
     constructors: Vec<fn() -> Box<dyn UnsafeComponentStorage>>,
 }
@@ -71,7 +70,8 @@ impl ComponentIndex {
 
 /// The location of an entity and one of its components.
 pub struct EntityLocation {
-    type_id: EntityTypeIndex, component_id: ComponentIndex
+    type_id: EntityTypeIndex, 
+    component_id: ComponentIndex,
 }
 
 impl EntityLocation {
@@ -87,6 +87,7 @@ impl EntityLocation {
 }
 
 /// A map of active entities to the locations of their components.
+#[derive(Clone, Debug)]
 pub struct EntityLocationMap {
     locations: HashMap<Entity, EntityTypeIndex>,
 }
@@ -98,8 +99,8 @@ impl EntityLocationMap {
         }
     }
 
-    fn insert(&mut self, entity: Entity, entity_type: EntityTypeIndex, component: ComponentIndex) {
-        todo!()
+    fn insert(&mut self, entity: Entity, entity_type: EntityTypeIndex) -> Option<EntityTypeIndex> {
+        self.locations.insert(entity, entity_type)
     }
 
     fn len(&self) -> usize {
@@ -111,15 +112,15 @@ impl EntityLocationMap {
     }
 
     fn contains(&self, entity: Entity) -> bool {
-        todo!()
+        self.locations.contains_key(&entity)
     }
 
-    fn get(&self, entity: Entity) -> Option<EntityLocation> {
-        todo!()
+    fn get(&self, entity: Entity) -> Option<EntityTypeIndex> {
+        self.locations.get(&entity).map(|idx| *idx)
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<EntityLocation> {
-        todo!()
+    fn remove(&mut self, entity: Entity) -> Option<EntityTypeIndex> {
+        self.locations.remove(&entity)
     }
 }
 
@@ -202,7 +203,7 @@ pub trait UnsafeComponentStorage: Send + Sync {
 
     unsafe fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
 
-    unsafe fn extended_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize) -> usize;
+    unsafe fn memcopy_extend(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize) -> usize;
 }
 
 pub trait ComponentStorage<'a, T: Component>: UnsafeComponentStorage + Default {
@@ -210,7 +211,7 @@ pub trait ComponentStorage<'a, T: Component>: UnsafeComponentStorage + Default {
     type IterMut: Iterator<Item = ComponentSliceMut<'a, T>>;
 
 
-    unsafe fn extended_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) -> usize; 
+    unsafe fn memcopy_extend(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) -> usize; 
 
     fn get(&self, entity: Entity) -> Option<&'a T>;
 
