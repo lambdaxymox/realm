@@ -91,11 +91,39 @@ struct EntityLocationMap {
 }
 
 impl EntityLocationMap {
-    
+    fn new() -> EntityLocationMap {
+        EntityLocationMap {
+            locations: HashMap::new(),
+        }
+    }
+
+    fn insert(&mut self, entity: Entity, entity_type: EntityTypeIndex, component: ComponentIndex) {
+        todo!()
+    }
+
+    fn len(&self) -> usize {
+        self.locations.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.locations.is_empty()
+    }
+
+    fn contains(&self, entity: Entity) -> bool {
+        todo!()
+    }
+
+    fn get(&self, entity: Entity) -> Option<EntityLocation> {
+        todo!()
+    }
+
+    fn remove(&mut self, entity: Entity) -> Option<EntityLocation> {
+        todo!()
+    }
 }
 
 
-struct ComponentSlice<'a, T> {
+pub struct ComponentSlice<'a, T> {
     slice: &'a [T],
 }
 
@@ -130,7 +158,7 @@ impl<'a, T> ops::Index<ComponentIndex> for ComponentSlice<'a, T> {
     }
 }
 
-struct ComponentSliceMut<'a, T> {
+pub struct ComponentSliceMut<'a, T> {
     slice: &'a mut [T],
 }
 
