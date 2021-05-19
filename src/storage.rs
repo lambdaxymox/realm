@@ -76,12 +76,12 @@ pub struct EntityLocation {
 
 impl EntityLocation {
     #[inline]
-    fn entity_type(self) -> EntityTypeIndex {
+    pub fn entity_type(self) -> EntityTypeIndex {
         self.type_id
     }
 
     #[inline]
-    fn component(self) -> ComponentIndex {
+    pub fn component(self) -> ComponentIndex {
         self.component_id
     }
 }
@@ -103,15 +103,15 @@ impl EntityLocationMap {
         self.locations.insert(entity, entity_type)
     }
 
-    fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.locations.len()
     }
 
-    fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.locations.is_empty()
     }
 
-    fn contains(&self, entity: Entity) -> bool {
+    pub(crate) fn contains(&self, entity: Entity) -> bool {
         self.locations.contains_key(&entity)
     }
 
@@ -203,23 +203,18 @@ pub trait UnsafeComponentStorage: Send + Sync {
 
     unsafe fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
 
-    unsafe fn memcopy_extend(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize) -> usize;
+    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize) -> usize;
 }
 
 pub trait ComponentStorage<'a, T: Component>: UnsafeComponentStorage + Default {
     type Iter: Iterator<Item = ComponentSlice<'a, T>>;
     type IterMut: Iterator<Item = ComponentSliceMut<'a, T>>;
 
+    fn get(&self, entity_type: EntityTypeIndex) -> Option<ComponentSlice<'a, T>>;
 
-    unsafe fn memcopy_extend(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) -> usize; 
+    fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentSliceMut<'a, T>>;
 
-    fn get(&self, entity: Entity) -> Option<&'a T>;
-
-    fn get_mut(&mut self, entity: Entity) -> Option<&'a mut T>;
-
-    fn by_entity_type(&self, entity_type: EntityTypeIndex) -> Option<ComponentSlice<'a, T>>;
-
-    fn by_entity_type_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentSliceMut<'a, T>>;
+    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) -> usize; 
 
     fn iter(&self) -> Self::Iter;
 

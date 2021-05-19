@@ -49,16 +49,16 @@ impl World {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        todo!()
+    pub fn len(&self) -> usize {
+        self.entities.len()
     }
 
-    pub fn len(&self) -> usize {
-        todo!()
+    pub fn is_empty(&self) -> bool {
+        self.entities.is_empty()
     }
 
     pub fn contains(&self, entity: Entity) -> bool {
-        todo!()
+        self.entities.contains(entity)
     }
 
     pub fn remove(&mut self, entity: Entity) -> bool {
