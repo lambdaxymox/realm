@@ -7,7 +7,7 @@ use crate::entity::{
     EntityAllocator,
 };
 use crate::storage::{
-    UnknownComponentStorage,
+    OpaqueComponentStorage,
     EntityLocationMap,
     EntityTypeMap,
     EntityType,
@@ -25,8 +25,8 @@ use std::mem;
 
 
 /// where the components live in a world.
-struct ComponentMap {
-    data: HashMap<ComponentTypeIndex, Box<dyn UnknownComponentStorage>>,
+pub struct ComponentMap {
+    data: HashMap<ComponentTypeIndex, Box<dyn OpaqueComponentStorage>>,
 }
 
 impl ComponentMap {
@@ -36,11 +36,11 @@ impl ComponentMap {
         }
     }
 
-    fn get(&self, component_type: ComponentTypeIndex) -> Option<&dyn UnknownComponentStorage> {
+    fn get(&self, component_type: ComponentTypeIndex) -> Option<&dyn OpaqueComponentStorage> {
         self.data.get(&component_type).map(|cell| cell.as_ref())
     }
 
-    fn get_mut(&mut self, component_type: ComponentTypeIndex) -> Option<&mut dyn UnknownComponentStorage> {
+    fn get_mut(&mut self, component_type: ComponentTypeIndex) -> Option<&mut dyn OpaqueComponentStorage> {
         self.data.get_mut(&component_type).map(|cell| cell.as_mut())
     }
 
@@ -102,7 +102,7 @@ impl<'a> Entry<'a> {
 }
 
 /// Where all the data is grouped together.
-struct World {
+pub struct World {
     entities: EntityLocationMap,
     entity_types: Vec<EntityTypeMap>,
     entity_allocator: EntityAllocator,

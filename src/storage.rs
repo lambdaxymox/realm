@@ -25,7 +25,7 @@ use std::ptr;
 #[derive(Debug)]
 pub struct EntityType {
     components: Vec<ComponentTypeIndex>,
-    constructors: Vec<fn() -> Box<dyn UnknownComponentStorage>>,
+    constructors: Vec<fn() -> Box<dyn OpaqueComponentStorage>>,
 }
 
 impl EntityType {
@@ -268,7 +268,7 @@ impl ComponentMetadata {
     }
 }
 
-pub trait UnknownComponentStorage: Downcast + Send + Sync {
+pub trait OpaqueComponentStorage: Downcast + Send + Sync {
     fn metadata(&self) -> ComponentMetadata;
 
     fn swap_remove(&mut self, entity_type: EntityLocation, index: ComponentIndex);
@@ -280,10 +280,10 @@ pub trait UnknownComponentStorage: Downcast + Send + Sync {
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize);
 }
 
-impl_downcast!(UnknownComponentStorage);
+impl_downcast!(OpaqueComponentStorage);
 
 
-pub trait ComponentStorage<'a, T: Component>: UnknownComponentStorage + Default {
+pub trait ComponentStorage<'a, T: Component>: OpaqueComponentStorage + Default {
     type Iter: Iterator<Item = ComponentView<'a, T>>;
     type IterMut: Iterator<Item = ComponentViewMut<'a, T>>;
 
