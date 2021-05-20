@@ -40,10 +40,20 @@ impl ComponentMap {
         self.data.get(&component_type).map(|cell| cell.as_ref())
     }
 
+    fn get_mut(&mut self, component_type: ComponentTypeIndex) -> Option<&mut dyn UnknownComponentStorage> {
+        self.data.get_mut(&component_type).map(|cell| cell.as_mut())
+    }
+
     pub fn get_view<T: Component + StoreComponentsIn>(&self) -> Option<&T::Storage> {
         let component_type = ComponentTypeIndex::of::<T>();
         self.get(component_type)
             .and_then(|storage| storage.downcast_ref())
+    }
+
+    pub fn get_view_mut<T: Component + StoreComponentsIn>(&mut self) -> Option<&mut T::Storage> {
+        let component_type = ComponentTypeIndex::of::<T>();
+        self.get_mut(component_type)
+            .and_then(|storage| storage.downcast_mut())
     }
 }
 
@@ -76,6 +86,17 @@ impl<'a> Entry<'a> {
             .get_view::<T>()
             .and_then(move |storage| storage.get(entity_type))
             .and_then(move |view| view.into_slice().get(component.id()))
+            .ok_or_else(|| {})
+    }
+
+    pub fn get_component_mut<T: Component + StoreComponentsIn>(&mut self) -> Result<&mut T, ()> {
+        let entity_type = self.location.entity_type();
+        let component = self.location.component();
+        self.world
+            .components_mut()
+            .get_view_mut::<T>()
+            .and_then(move |storage| storage.get_mut(entity_type))
+            .and_then(move |view| view.into_slice().get_mut(component.id()))
             .ok_or_else(|| {})
     }
 }

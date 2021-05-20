@@ -139,7 +139,6 @@ impl EntityLocationMap {
     }
 }
 
-
 pub struct ComponentView<'a, T> {
     slice: &'a [T],
 }
@@ -190,6 +189,11 @@ impl<'a, T> ComponentViewMut<'a, T>{
         ComponentViewMut {
             slice: slice,
         }
+    }
+
+    #[inline]
+    pub fn into_slice(self) -> &'a mut [T] {
+        self.slice
     }
 }
 
