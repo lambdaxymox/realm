@@ -36,9 +36,9 @@ impl ComponentMap {
         self.data.get(&component_type).map(|cell| cell.as_ref())
     }
 
-    fn get_view<T: Component + StoreComponentsIn<T>>(&self) -> Option<&T::Storage> {
+    pub fn get_view<T: Component + StoreComponentsIn>(&self) -> Option<&T::Storage> {
         let type_id = ComponentTypeIndex::of::<T>();
-        None
+        self.get(&type_id).and_then(|storage| storage.interpret())
     }
 }
 
@@ -63,7 +63,7 @@ impl<'a> Entry<'a> {
         self.location
     }
 
-    pub fn get_component<T: Component + StoreComponentsIn<T>>(&self) -> Result<&T, ()> {
+    pub fn get_component<T: Component + StoreComponentsIn>(&self) -> Result<&T, ()> {
         let entity_type = self.location.entity_type();
         let component = self.location.component();
         self.world

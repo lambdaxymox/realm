@@ -335,7 +335,7 @@ pub trait ComponentStorage<'a, T: Component>: UnknownComponentStorage + Default 
     }
 }
 
-pub trait StoreComponentsIn<T>: Component where T: Component {
-    type Storage: for<'a> ComponentStorage<'a, T>;
+pub trait StoreComponentsIn where Self: Component {
+    type Storage: for<'a> ComponentStorage<'a, Self>;
 }
 
