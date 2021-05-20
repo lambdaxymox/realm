@@ -15,9 +15,13 @@ use crate::storage::{
     StoreComponentsIn,
     ComponentStorage,
 };
+use downcast::{
+    Downcast,
+};
 use std::collections::{
     HashMap,
 };
+use std::mem;
 
 
 /// where the components live in a world.
@@ -37,8 +41,9 @@ impl ComponentMap {
     }
 
     pub fn get_view<T: Component + StoreComponentsIn>(&self) -> Option<&T::Storage> {
-        let type_id = ComponentTypeIndex::of::<T>();
-        self.get(&type_id).and_then(|storage| storage.interpret())
+        let component_type = ComponentTypeIndex::of::<T>();
+        self.get(component_type)
+            .and_then(|storage| storage.downcast_ref())
     }
 }
 

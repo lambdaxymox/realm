@@ -5,6 +5,10 @@ use crate::component::{
     Component,
     ComponentTypeIndex,
 };
+use downcast::{
+    Downcast,
+    impl_downcast,
+};
 use std::sync::{
     Arc,
 };
@@ -261,8 +265,8 @@ pub enum InterpretError {
     SizeAlignmentMismatch(usize, usize, usize, usize),
 }
 
-pub trait Interpret {
-    unsafe fn interpret_unchecked<T: Any>(&self) -> &T;
+pub trait CastStorage {
+    unsafe fn cast(&self) -> &dyn std::any::Any;
 
     unsafe fn interpret_unchecked_mut<T: Any>(&mut self) -> (*mut T, usize);
 
@@ -302,7 +306,8 @@ pub trait Interpret {
 }
 */
 
-pub trait UnknownComponentStorage: Send + Sync {
+
+pub trait UnknownComponentStorage: Downcast + Send + Sync {
     fn metadata(&self) -> ComponentMetadata;
 
     fn swap_remove(&mut self, entity_type: EntityLocation, index: ComponentIndex);
@@ -313,6 +318,9 @@ pub trait UnknownComponentStorage: Send + Sync {
 
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize);
 }
+
+impl_downcast!(UnknownComponentStorage);
+
 
 pub trait ComponentStorage<'a, T: Component>: UnknownComponentStorage + Default {
     type Iter: Iterator<Item = ComponentView<'a, T>>;
