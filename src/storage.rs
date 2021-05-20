@@ -258,55 +258,6 @@ impl ComponentMetadata {
     }
 }
 
-/*
-pub enum InterpretError {
-    SizeMismatch(usize, usize),
-    AlignmentMismatch(usize, usize),
-    SizeAlignmentMismatch(usize, usize, usize, usize),
-}
-
-pub trait CastStorage {
-    unsafe fn cast(&self) -> &dyn std::any::Any;
-
-    unsafe fn interpret_unchecked_mut<T: Any>(&mut self) -> (*mut T, usize);
-
-    /// Get the interpretation error for the component storage.
-    ///
-    /// ## Safety
-    /// This function should only be called when the caller knows that the 
-    /// target type metadata is not compatible with the souce type for the 
-    /// component storage.
-    unsafe fn get_interpretation_error(&self) -> InterpretError;
-    
-    fn can_interpret_as<T: Any>(&self) -> bool;
-
-    fn interpret<T: Any>(&self) -> Result<(*const T, usize), InterpretError> {
-        if self.can_interpret_as::<T>() {
-            Ok(unsafe { 
-                self.interpret_unchecked()
-            })
-        } else {
-            Err(unsafe {
-                self.get_interpretation_error::<T>()
-            })
-        }
-    }
-
-    fn interpret_mut<T: Any>(&mut self) -> Result<(*mut T, usize), InterpretError> {
-        if self.can_interpret_as::<T>() {
-            Ok(unsafe { 
-                self.interpret_unchecked_mut()
-            })
-        } else {
-            Err(unsafe {
-                self.get_interpretation_error::<T>()
-            })
-        }
-    }
-}
-*/
-
-
 pub trait UnknownComponentStorage: Downcast + Send + Sync {
     fn metadata(&self) -> ComponentMetadata;
 
