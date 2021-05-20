@@ -28,6 +28,12 @@ pub struct EntityType {
     constructors: Vec<fn() -> Box<dyn UnknownComponentStorage>>,
 }
 
+impl EntityType {
+    pub fn components(&self) -> &[ComponentTypeIndex] {
+        &self.components
+    }
+}
+
 /// A collection of entities with the same layout. We create a new map every time
 /// a new entity layout is registered.
 #[derive(Debug)]
