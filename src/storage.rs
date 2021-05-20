@@ -5,28 +5,32 @@ use crate::component::{
     Component,
     ComponentTypeIndex,
 };
-use std::rc::{
-    Rc,
+use std::sync::{
+    Arc,
 };
 use std::collections::{
     HashMap,
 };
+use std::mem;
 use std::ops;
+use std::ptr;
 
 
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
+#[derive(Debug)]
 pub struct EntityType {
     components: Vec<ComponentTypeIndex>,
-    constructors: Vec<fn() -> Box<dyn UnsafeComponentStorage>>,
+    constructors: Vec<fn() -> Box<dyn UnknownComponentStorage>>,
 }
 
 /// A collection of entities with the same layout. We create a new map every time
 /// a new entity layout is registered.
+#[derive(Debug)]
 pub struct EntityTypeMap {
     index: EntityTypeIndex,
     entities: Vec<Entity>,
-    layout: Rc<EntityType>,
+    layout: Arc<EntityType>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -43,7 +47,7 @@ impl EntityTypeIndex {
     }
 
     #[inline]
-    fn id(self) -> usize {
+    pub(crate) fn id(self) -> usize {
         self.id
     }
 }
@@ -63,12 +67,13 @@ impl ComponentIndex {
     }
 
     #[inline]
-    fn id(self) -> usize {
+    pub fn id(self) -> usize {
         self.id
     }
 }
 
-/// The location of an entity and one of its components.
+/// The location of an entity and its components.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EntityLocation {
     type_id: EntityTypeIndex, 
     component_id: ComponentIndex,
@@ -89,7 +94,7 @@ impl EntityLocation {
 /// A map of active entities to the locations of their components.
 #[derive(Clone, Debug)]
 pub struct EntityLocationMap {
-    locations: HashMap<Entity, EntityTypeIndex>,
+    locations: HashMap<Entity, EntityLocation>,
 }
 
 impl EntityLocationMap {
@@ -99,46 +104,57 @@ impl EntityLocationMap {
         }
     }
 
-    fn insert(&mut self, entity: Entity, entity_type: EntityTypeIndex) -> Option<EntityTypeIndex> {
-        self.locations.insert(entity, entity_type)
+    fn insert(
+        &mut self, 
+        entities: &[Entity],
+        entity_type: EntityTypeIndex, 
+        base: ComponentIndex
+    ) -> Option<EntityLocation>
+    {
+        todo!()
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.locations.len()
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.locations.is_empty()
     }
 
-    pub(crate) fn contains(&self, entity: Entity) -> bool {
+    pub fn contains(&self, entity: Entity) -> bool {
         self.locations.contains_key(&entity)
     }
 
-    fn get(&self, entity: Entity) -> Option<EntityTypeIndex> {
+    pub fn get(&self, entity: Entity) -> Option<EntityLocation> {
         self.locations.get(&entity).map(|idx| *idx)
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<EntityTypeIndex> {
+    pub fn remove(&mut self, entity: Entity) -> Option<EntityLocation> {
         self.locations.remove(&entity)
     }
 }
 
 
-pub struct ComponentSlice<'a, T> {
+pub struct ComponentView<'a, T> {
     slice: &'a [T],
 }
 
-impl<'a, T> ComponentSlice<'a, T>{
+impl<'a, T> ComponentView<'a, T>{
     #[inline]
-    fn new(slice: &'a [T]) -> ComponentSlice<'a, T> {
-        ComponentSlice {
+    fn new(slice: &'a [T]) -> ComponentView<'a, T> {
+        ComponentView {
             slice: slice,
         }
     }
+
+    #[inline]
+    pub fn into_slice(self) -> &'a [T] {
+        self.slice
+    }
 }
 
-impl<'a, T: Component> ops::Deref for ComponentSlice<'a, T> {
+impl<'a, T: Component> ops::Deref for ComponentView<'a, T> {
     type Target = [T];
 
     fn deref(&self) -> &'a Self::Target {
@@ -146,13 +162,13 @@ impl<'a, T: Component> ops::Deref for ComponentSlice<'a, T> {
     }
 }
 
-impl<'a, T: Component> From<ComponentSlice<'a, T>> for &'a [T] {
-    fn from(components: ComponentSlice<'a, T>) -> Self {
+impl<'a, T: Component> From<ComponentView<'a, T>> for &'a [T] {
+    fn from(components: ComponentView<'a, T>) -> Self {
         components.slice
     }
 }
 
-impl<'a, T> ops::Index<ComponentIndex> for ComponentSlice<'a, T> {
+impl<'a, T> ops::Index<ComponentIndex> for ComponentView<'a, T> {
     type Output = T;
 
     fn index(&self, index: ComponentIndex) -> &Self::Output {
@@ -160,20 +176,20 @@ impl<'a, T> ops::Index<ComponentIndex> for ComponentSlice<'a, T> {
     }
 }
 
-pub struct ComponentSliceMut<'a, T> {
+pub struct ComponentViewMut<'a, T> {
     slice: &'a mut [T],
 }
 
-impl<'a, T> ComponentSliceMut<'a, T>{
+impl<'a, T> ComponentViewMut<'a, T>{
     #[inline]
-    fn new(slice: &'a mut [T]) -> ComponentSliceMut<'a, T> {
-        ComponentSliceMut {
+    fn new(slice: &'a mut [T]) -> ComponentViewMut<'a, T> {
+        ComponentViewMut {
             slice: slice,
         }
     }
 }
 
-impl<'a, T: Component> ops::Deref for ComponentSliceMut<'a, T> {
+impl<'a, T: Component> ops::Deref for ComponentViewMut<'a, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -181,7 +197,7 @@ impl<'a, T: Component> ops::Deref for ComponentSliceMut<'a, T> {
     }
 }
 
-impl<'a, T> ops::Index<ComponentIndex> for ComponentSliceMut<'a, T> {
+impl<'a, T> ops::Index<ComponentIndex> for ComponentViewMut<'a, T> {
     type Output = T;
 
     fn index(&self, index: ComponentIndex) -> &Self::Output {
@@ -189,32 +205,124 @@ impl<'a, T> ops::Index<ComponentIndex> for ComponentSliceMut<'a, T> {
     }
 }
 
-impl<'a, T> ops::IndexMut<ComponentIndex> for ComponentSliceMut<'a, T> {
+impl<'a, T> ops::IndexMut<ComponentIndex> for ComponentViewMut<'a, T> {
     fn index_mut(&mut self, index: ComponentIndex) -> &mut Self::Output {
         &mut self.slice[index.id]
     }
 }
 
-
-pub trait UnsafeComponentStorage: Send + Sync {
-    fn swap_remove(&mut self, entity_type: EntityTypeIndex, index: ComponentIndex);
-
-    fn get(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)>;
-
-    unsafe fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
-
-    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize) -> usize;
+#[derive(Copy, Clone, PartialEq)]
+pub struct ComponentMetadata {
+    size: usize,
+    alignment: usize,
+    drop_fn: Option<fn(*mut u8)>,
 }
 
-pub trait ComponentStorage<'a, T: Component>: UnsafeComponentStorage + Default {
-    type Iter: Iterator<Item = ComponentSlice<'a, T>>;
-    type IterMut: Iterator<Item = ComponentSliceMut<'a, T>>;
+impl ComponentMetadata {
+    fn of<T: Component>() -> ComponentMetadata {
+        let drop_fn: Option<fn(*mut u8)> = if mem::needs_drop::<T>() {
+            Some(|ptr| unsafe {
+                ptr::drop_in_place(ptr as *mut T)
+            })
+        } else {
+            None
+        };
 
-    fn get(&self, entity_type: EntityTypeIndex) -> Option<ComponentSlice<'a, T>>;
+        ComponentMetadata {
+            size: mem::size_of::<T>(),
+            alignment: mem::align_of::<T>(),
+            drop_fn: drop_fn,
+        }
+    }
 
-    fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentSliceMut<'a, T>>;
+    pub fn size(&self) -> usize {
+        self.size
+    }
 
-    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) -> usize; 
+    pub fn alignment(&self) -> usize {
+        self.alignment
+    }
+
+    pub fn padding(&self) -> usize {
+        self.alignment - self.size
+    }
+
+    pub unsafe fn drop(&self, value: *mut u8) {
+        if let Some(drop_fn) = self.drop_fn {
+            drop_fn(value)
+        }
+    }
+}
+
+/*
+pub enum InterpretError {
+    SizeMismatch(usize, usize),
+    AlignmentMismatch(usize, usize),
+    SizeAlignmentMismatch(usize, usize, usize, usize),
+}
+
+pub trait Interpret {
+    unsafe fn interpret_unchecked<T: Any>(&self) -> &T;
+
+    unsafe fn interpret_unchecked_mut<T: Any>(&mut self) -> (*mut T, usize);
+
+    /// Get the interpretation error for the component storage.
+    ///
+    /// ## Safety
+    /// This function should only be called when the caller knows that the 
+    /// target type metadata is not compatible with the souce type for the 
+    /// component storage.
+    unsafe fn get_interpretation_error(&self) -> InterpretError;
+    
+    fn can_interpret_as<T: Any>(&self) -> bool;
+
+    fn interpret<T: Any>(&self) -> Result<(*const T, usize), InterpretError> {
+        if self.can_interpret_as::<T>() {
+            Ok(unsafe { 
+                self.interpret_unchecked()
+            })
+        } else {
+            Err(unsafe {
+                self.get_interpretation_error::<T>()
+            })
+        }
+    }
+
+    fn interpret_mut<T: Any>(&mut self) -> Result<(*mut T, usize), InterpretError> {
+        if self.can_interpret_as::<T>() {
+            Ok(unsafe { 
+                self.interpret_unchecked_mut()
+            })
+        } else {
+            Err(unsafe {
+                self.get_interpretation_error::<T>()
+            })
+        }
+    }
+}
+*/
+
+pub trait UnknownComponentStorage: Send + Sync {
+    fn metadata(&self) -> ComponentMetadata;
+
+    fn swap_remove(&mut self, entity_type: EntityLocation, index: ComponentIndex);
+
+    fn get_bytes(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)>;
+
+    unsafe fn get_bytes_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
+
+    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize);
+}
+
+pub trait ComponentStorage<'a, T: Component>: UnknownComponentStorage + Default {
+    type Iter: Iterator<Item = ComponentView<'a, T>>;
+    type IterMut: Iterator<Item = ComponentViewMut<'a, T>>;
+
+    fn get(&self, entity_type: EntityTypeIndex) -> Option<ComponentView<'a, T>>;
+
+    fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentViewMut<'a, T>>;
+
+    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize);
 
     fn iter(&self) -> Self::Iter;
 
@@ -227,7 +335,7 @@ pub trait ComponentStorage<'a, T: Component>: UnsafeComponentStorage + Default {
     }
 }
 
-pub trait StoreComponentsIn<T> where T: Component {
+pub trait StoreComponentsIn<T>: Component where T: Component {
     type Storage: for<'a> ComponentStorage<'a, T>;
 }
 

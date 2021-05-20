@@ -9,7 +9,7 @@ pub trait Component: 'static + Sized + Send + Sync {}
 impl<T> Component for T where T: 'static + Sized + Send + Sync {}
 
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentTypeIndex {
     type_id: TypeId,
 }
@@ -19,7 +19,7 @@ impl ComponentTypeIndex {
         self.type_id
     }
 
-    pub fn of<T: Component>(&self) -> ComponentTypeIndex {
+    pub fn of<T: Component>() -> ComponentTypeIndex {
         ComponentTypeIndex {
             type_id: TypeId::of::<T>(),
         }
