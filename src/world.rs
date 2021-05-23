@@ -11,6 +11,7 @@ use crate::storage::{
     EntityLocationMap,
     EntityTypeMap,
     EntityType,
+    EntityTypeIndex,
     EntityLocation,
     StoreComponentsIn,
     ComponentStorage,
@@ -20,6 +21,7 @@ use downcast::{
 };
 use std::collections::{
     HashMap,
+    HashSet,
 };
 use std::mem;
 
@@ -41,7 +43,9 @@ impl ComponentMap {
     }
 
     fn get_mut(&mut self, component_type: ComponentTypeIndex) -> Option<&mut dyn OpaqueComponentStorage> {
-        self.data.get_mut(&component_type).map(|cell| cell.as_mut())
+        self.data
+            .get_mut(&component_type)
+            .map(|cell| cell.as_mut())
     }
 
     pub fn get_view<T: Component + StoreComponentsIn>(&self) -> Option<&T::Storage> {
@@ -70,7 +74,7 @@ impl<'a> Entry<'a> {
         }
     }
 
-    pub fn entity_type(&self) -> &EntityType {
+    pub fn entity_type(&self) -> &EntityTypeMap {
         &self.world.entity_types()[self.location.entity_type().id()]
     }
 
@@ -99,6 +103,90 @@ impl<'a> Entry<'a> {
             .and_then(move |view| view.into_slice().get_mut(component.id()))
             .ok_or_else(|| {})
     }
+}
+
+
+pub struct MultiViewMut<'a> {
+    components: &'a mut ComponentMap,
+    claimed: HashSet<ComponentTypeIndex>,    
+}
+
+impl<'a> MultiViewMut<'a> {
+    fn new(components: &'a mut ComponentMap) -> Self {
+        Self {
+            components: components,
+            claimed: HashSet::default(),
+        }
+    }
+
+    pub unsafe fn claim<T: Component + StoreComponentsIn>(&mut self) -> Option<&'a mut T::Storage> {
+        let type_id = ComponentTypeIndex::of::<T>();
+        self.claimed.insert(type_id);
+
+        self.components
+            .get_view_mut::<T>()
+            .map(|storage| {
+                mem::transmute::<&mut T::Storage, &'a mut T::Storage>(storage)
+            })
+    }
+}
+
+
+pub struct EntityTypeWriter<'a> {
+    entity_type_index: EntityTypeIndex,
+    entity_type_map: &'a mut EntityTypeMap,
+    components: MultiViewMut<'a>,
+    claimed: u128,
+    initial_count: usize,
+}
+
+impl<'a> EntityTypeWriter<'a> {
+    pub fn new(
+        entity_type_index: EntityTypeIndex,
+        entity_type_map: &'a mut EntityTypeMap,
+        components: MultiViewMut<'a>,
+    ) -> Self {
+        let initial_count = entity_type_map.entities().len();
+        Self {
+            entity_type_index: entity_type_index,
+            entity_type_map: entity_type_map,
+            components: components,
+            claimed: 0,
+            initial_count: initial_count,
+        }
+    }
+
+    pub fn insert(&mut self, entity: Entity) {
+        todo!()
+    }
+
+    pub fn claim_components<T: Component + StoreComponentsIn>(&mut self) -> ComponentWriter<'a, T> {
+        todo!()
+    }
+
+    pub fn entity_type(&self) -> &EntityTypeMap {
+        &self.entity_type_map
+    }
+}
+
+
+pub trait ComponentSource {
+    fn push_components<'a>(
+        &mut self,
+        writer: &mut EntityTypeWriter<'a>,
+        entities: impl Iterator<Item = Entity>,
+    );
+}
+
+pub trait IntoComponentSource {
+    type Source: ComponentSource;
+
+    fn into(self) -> Self::Source;
+}
+
+pub struct ComponentWriter<'a, T: Component + StoreComponentsIn> {
+    components: &'a mut T::Storage,
+    entity_type: EntityTypeIndex,
 }
 
 /// Where all the data is grouped together.
@@ -131,6 +219,10 @@ impl World {
         self.entities.contains(entity)
     }
 
+    pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
+        todo!()
+    }
+
     pub fn remove(&mut self, entity: Entity) -> bool {
         if let Some(location) = self.entities.remove(entity) {
             self.remove_at_location(location);
@@ -141,7 +233,7 @@ impl World {
         }
     }
 
-    pub fn remove_at_location(&mut self, location: EntityLocation) {
+    fn remove_at_location(&mut self, location: EntityLocation) {
         todo!()
     }
 
@@ -150,19 +242,15 @@ impl World {
     }
 
     pub fn components(&self) -> &ComponentMap {
-        todo!()
+        &self.components
     }
 
     pub fn components_mut(&mut self) -> &mut ComponentMap {
-        todo!()
+        &mut self.components
     }
 
-    pub fn entity_types(&self) -> &[EntityType] {
-        todo!()
-    }
-
-    fn create_new_entity_type(&mut self, entity_type: EntityType) -> EntityTypeMap {
-        todo!()
+    pub fn entity_types(&self) -> &[EntityTypeMap] {
+        &self.entity_types
     }
 }
 

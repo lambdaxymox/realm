@@ -43,6 +43,12 @@ pub struct EntityTypeMap {
     layout: Arc<EntityType>,
 }
 
+impl EntityTypeMap {
+    pub fn entities(&self) -> &[Entity] {
+        &self.entities
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EntityTypeIndex {
     id: usize,
