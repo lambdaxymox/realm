@@ -161,7 +161,15 @@ impl<'a> EntityTypeWriter<'a> {
     }
 
     pub fn claim_components<T: Component + StoreComponentsIn>(&mut self) -> ComponentWriter<'a, T> {
-        todo!()
+        let component_type_id = ComponentTypeIndex::of::<T>();
+        let mut components = unsafe { 
+            self.components.claim::<T>().unwrap()
+        };
+        
+        ComponentWriter {
+            components: components,
+            entity_type: self.entity_type_index,
+        }
     }
 
     pub fn entity_type(&self) -> &EntityTypeMap {
