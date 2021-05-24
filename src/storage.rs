@@ -283,7 +283,7 @@ pub trait OpaqueComponentStorage: Downcast + Send + Sync {
 
     unsafe fn get_bytes_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
 
-    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len: usize);
+    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len_bytes: usize);
 }
 
 impl_downcast!(OpaqueComponentStorage);

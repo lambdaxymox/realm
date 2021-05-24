@@ -250,6 +250,7 @@ pub struct World {
     entity_types: Vec<EntityType>,
     entity_allocator: EntityAllocator,
     components: ComponentMap,
+    allocation_buffer: Vec<Entity>,
 }
 
 impl World {
@@ -258,7 +259,8 @@ impl World {
             entities: EntityLocationMap::new(),
             entity_types: Vec::new(),
             entity_allocator: EntityAllocator::new(),
-            components: ComponentMap::new()
+            components: ComponentMap::new(),
+            allocation_buffer: Vec::new(),
         }
     }
 
@@ -275,6 +277,23 @@ impl World {
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
+        todo!("IMPLEMENT ME!")
+    }
+
+    pub fn append(&mut self, components: impl IntoComponentSource) -> &[Entity] {
+        let mut allocation_buffer = mem::take(&mut self.allocation_buffer);
+        allocation_buffer.clear();
+        self.append_out(components, &mut allocation_buffer);
+        self.allocation_buffer = allocation_buffer;
+
+        &self.allocation_buffer
+    }
+
+    pub fn append_out<Src, Ext>(&mut self, components: Src, out: &mut Ext)
+    where
+        Src: IntoComponentSource,
+        Ext: for<'a> Extend<&'a Entity>,
+    {
         todo!("IMPLEMENT ME!")
     }
 
