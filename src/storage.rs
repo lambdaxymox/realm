@@ -23,12 +23,12 @@ use std::ptr;
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
 #[derive(Debug)]
-pub struct EntityType {
+pub struct EntityLayout {
     components: Vec<ComponentTypeIndex>,
     constructors: Vec<fn() -> Box<dyn OpaqueComponentStorage>>,
 }
 
-impl EntityType {
+impl EntityLayout {
     pub fn components(&self) -> &[ComponentTypeIndex] {
         &self.components
     }
@@ -40,7 +40,7 @@ impl EntityType {
 pub struct EntityTypeMap {
     index: EntityTypeIndex,
     entities: Vec<Entity>,
-    layout: Arc<EntityType>,
+    layout: Arc<EntityLayout>,
 }
 
 impl EntityTypeMap {
@@ -127,7 +127,7 @@ impl EntityLocationMap {
         base: ComponentIndex
     ) -> Option<EntityLocation>
     {
-        todo!()
+        todo!("IMPLEMENT ME!")
     }
 
     pub fn len(&self) -> usize {

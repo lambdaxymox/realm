@@ -10,7 +10,7 @@ use crate::storage::{
     OpaqueComponentStorage,
     EntityLocationMap,
     EntityTypeMap,
-    EntityType,
+    EntityLayout,
     EntityTypeIndex,
     EntityLocation,
     StoreComponentsIn,
@@ -200,7 +200,7 @@ where
         writer: &mut EntityTypeWriter<'a>,
         entities: impl Iterator<Item = Entity>,
     ) {
-        todo!()
+        todo!("IMPLEMENT ME!")
     }
 }
 
@@ -289,11 +289,11 @@ impl World {
     }
 
     fn remove_at_location(&mut self, location: EntityLocation) {
-        todo!()
+        todo!("IMPLEMENT ME!")
     }
 
     pub fn clear(&mut self) {
-        todo!()
+        todo!("IMPLEMENT ME!")
     }
 
     pub fn components(&self) -> &ComponentMap {
