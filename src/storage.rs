@@ -277,7 +277,7 @@ impl ComponentMetadata {
 pub trait OpaqueComponentStorage: Downcast + Send + Sync {
     fn metadata(&self) -> ComponentMetadata;
 
-    fn swap_remove(&mut self, entity_type: EntityLocation, index: ComponentIndex);
+    fn swap_remove(&mut self, entity_type: EntityTypeIndex, index: ComponentIndex);
 
     fn get_bytes(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)>;
 

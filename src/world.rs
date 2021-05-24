@@ -134,7 +134,7 @@ impl<'a> MultiViewMut<'a> {
 
 pub struct EntityTypeWriter<'a> {
     entity_type_index: EntityTypeIndex,
-    entity_type_map: &'a mut EntityType,
+    entity_type: &'a mut EntityType,
     components: MultiViewMut<'a>,
     claimed: u128,
     initial_count: usize,
@@ -143,13 +143,13 @@ pub struct EntityTypeWriter<'a> {
 impl<'a> EntityTypeWriter<'a> {
     pub fn new(
         entity_type_index: EntityTypeIndex,
-        entity_type_map: &'a mut EntityType,
+        entity_type: &'a mut EntityType,
         components: MultiViewMut<'a>,
     ) -> Self {
-        let initial_count = entity_type_map.entities().len();
+        let initial_count = entity_type.entities().len();
         Self {
             entity_type_index: entity_type_index,
-            entity_type_map: entity_type_map,
+            entity_type,
             components: components,
             claimed: 0,
             initial_count: initial_count,
@@ -173,7 +173,7 @@ impl<'a> EntityTypeWriter<'a> {
     }
 
     pub fn entity_type(&self) -> &EntityType {
-        &self.entity_type_map
+        &self.entity_type
     }
 }
 
@@ -275,7 +275,7 @@ impl World {
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
-        todo!()
+        todo!("IMPLEMENT ME!")
     }
 
     pub fn remove(&mut self, entity: Entity) -> bool {
