@@ -162,7 +162,7 @@ impl<'a> EntityTypeWriter<'a> {
 
     pub fn claim_components<T: Component + StoreComponentsIn>(&mut self) -> ComponentWriter<'a, T> {
         let component_type_id = ComponentTypeIndex::of::<T>();
-        let mut components = unsafe { 
+        let components = unsafe {
             self.components.claim::<T>().unwrap()
         };
         
@@ -186,15 +186,62 @@ pub trait ComponentSource {
     );
 }
 
+pub struct SingleEntity<T> {
+    data: T,
+}
+
+impl<T1, T2> ComponentSource for SingleEntity<(T1, T2)> 
+where
+    T1: Component,
+    T2: Component,
+{
+    fn push_components<'a>(
+        &mut self,
+        writer: &mut EntityTypeWriter<'a>,
+        entities: impl Iterator<Item = Entity>,
+    ) {
+        todo!()
+    }
+}
+
 pub trait IntoComponentSource {
     type Source: ComponentSource;
 
     fn into(self) -> Self::Source;
 }
 
+
+impl<T1, T2> IntoComponentSource for (T1, T2)
+where 
+    T1: Component, 
+    T2: Component,
+{
+    type Source = SingleEntity<(T1, T2)>;
+
+    fn into(self) -> Self::Source {
+        SingleEntity {
+            data: self,
+        }
+    }
+}
+
 pub struct ComponentWriter<'a, T: Component + StoreComponentsIn> {
     components: &'a mut T::Storage,
     entity_type: EntityTypeIndex,
+}
+
+impl<'a, T> ComponentWriter<'a, T>
+where
+    T: Component + StoreComponentsIn
+{
+    pub unsafe fn extend_memcopy(&mut self, ptr: *const T, len: usize) {
+        <T::Storage as ComponentStorage<'a,_>>::extend_memcopy(
+            &mut self.components, 
+            self.entity_type,
+            ptr, 
+            len
+        );
+    }
 }
 
 /// Where all the data is grouped together.
