@@ -280,16 +280,16 @@ impl World {
         todo!("IMPLEMENT ME!")
     }
 
-    pub fn append(&mut self, components: impl IntoComponentSource) -> &[Entity] {
+    pub fn extend(&mut self, components: impl IntoComponentSource) -> &[Entity] {
         let mut allocation_buffer = mem::take(&mut self.allocation_buffer);
         allocation_buffer.clear();
-        self.append_out(components, &mut allocation_buffer);
+        self.extend_out(components, &mut allocation_buffer);
         self.allocation_buffer = allocation_buffer;
 
         &self.allocation_buffer
     }
 
-    pub fn append_out<Src, Ext>(&mut self, components: Src, out: &mut Ext)
+    pub fn extend_out<Src, Ext>(&mut self, components: Src, out: &mut Ext)
     where
         Src: IntoComponentSource,
         Ext: for<'a> Extend<&'a Entity>,
