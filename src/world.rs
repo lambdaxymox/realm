@@ -9,7 +9,7 @@ use crate::entity::{
 use crate::storage::{
     OpaqueComponentStorage,
     EntityLocationMap,
-    EntityTypeMap,
+    EntityType,
     EntityLayout,
     EntityTypeIndex,
     EntityLocation,
@@ -74,7 +74,7 @@ impl<'a> Entry<'a> {
         }
     }
 
-    pub fn entity_type(&self) -> &EntityTypeMap {
+    pub fn entity_type(&self) -> &EntityType {
         &self.world.entity_types()[self.location.entity_type().id()]
     }
 
@@ -134,7 +134,7 @@ impl<'a> MultiViewMut<'a> {
 
 pub struct EntityTypeWriter<'a> {
     entity_type_index: EntityTypeIndex,
-    entity_type_map: &'a mut EntityTypeMap,
+    entity_type_map: &'a mut EntityType,
     components: MultiViewMut<'a>,
     claimed: u128,
     initial_count: usize,
@@ -143,7 +143,7 @@ pub struct EntityTypeWriter<'a> {
 impl<'a> EntityTypeWriter<'a> {
     pub fn new(
         entity_type_index: EntityTypeIndex,
-        entity_type_map: &'a mut EntityTypeMap,
+        entity_type_map: &'a mut EntityType,
         components: MultiViewMut<'a>,
     ) -> Self {
         let initial_count = entity_type_map.entities().len();
@@ -172,7 +172,7 @@ impl<'a> EntityTypeWriter<'a> {
         }
     }
 
-    pub fn entity_type(&self) -> &EntityTypeMap {
+    pub fn entity_type(&self) -> &EntityType {
         &self.entity_type_map
     }
 }
@@ -247,7 +247,7 @@ where
 /// Where all the data is grouped together.
 pub struct World {
     entities: EntityLocationMap,
-    entity_types: Vec<EntityTypeMap>,
+    entity_types: Vec<EntityType>,
     entity_allocator: EntityAllocator,
     components: ComponentMap,
 }
@@ -304,7 +304,7 @@ impl World {
         &mut self.components
     }
 
-    pub fn entity_types(&self) -> &[EntityTypeMap] {
+    pub fn entity_types(&self) -> &[EntityType] {
         &self.entity_types
     }
 }

@@ -37,13 +37,13 @@ impl EntityLayout {
 /// A collection of entities with the same layout. We create a new map every time
 /// a new entity layout is registered.
 #[derive(Debug)]
-pub struct EntityTypeMap {
+pub struct EntityType {
     index: EntityTypeIndex,
     entities: Vec<Entity>,
     layout: Arc<EntityLayout>,
 }
 
-impl EntityTypeMap {
+impl EntityType {
     pub fn entities(&self) -> &[Entity] {
         &self.entities
     }
