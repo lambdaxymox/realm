@@ -32,6 +32,12 @@ impl EntityLayout {
     pub fn component_types(&self) -> &[ComponentTypeIndex] {
         &self.components
     }
+
+    #[inline]
+    pub(crate) fn contains_component<T: Component>(&self) -> bool {
+        let type_id = ComponentTypeIndex::of::<T>();
+        self.components.contains(&type_id)
+    }
 }
 
 /// A collection of entities with the same layout. We create a new map every time
@@ -54,8 +60,13 @@ impl EntityType {
         removed
     }
 
+    #[inline]
     pub(crate) fn layout(&self) -> &EntityLayout {
         &self.layout
+    }
+
+    pub fn contains_component<T: Component>(&self) -> bool {
+        self.layout().contains_component::<T>()
     }
 
     pub(crate) fn contains_component_value(&self, index: usize) -> bool {

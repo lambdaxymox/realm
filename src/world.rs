@@ -59,6 +59,11 @@ impl ComponentMap {
         self.get_mut(component_type)
             .and_then(|storage| storage.downcast_mut())
     }
+
+    pub fn contains_component<T: Component + StoreComponentsIn>(&self) -> bool {
+        let component_type = ComponentTypeIndex::of::<T>();
+        self.data.contains_key(&component_type)
+    }
 }
 
 pub struct Entry<'a> {
@@ -102,6 +107,10 @@ impl<'a> Entry<'a> {
             .and_then(move |storage| storage.get_mut(entity_type))
             .and_then(move |view| view.into_slice().get_mut(component.id()))
             .ok_or_else(|| {})
+    }
+
+    pub fn has_component<T: Component + StoreComponentsIn>(&self) -> bool {
+        todo!()
     }
 }
 
@@ -274,6 +283,16 @@ impl World {
 
     pub fn contains(&self, entity: Entity) -> bool {
         self.entities.contains(entity)
+    }
+
+    pub fn contains_component<T: Component + StoreComponentsIn>(&self) -> bool {
+        self.components.contains_component::<T>()
+    }
+
+    pub fn has_component<T: Component + StoreComponentsIn>(&self, entity: Entity) -> bool {
+        /// Look up the entity type for the entity.
+        /// check that the entity type has the component type.
+        todo!()
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
