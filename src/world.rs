@@ -277,7 +277,7 @@ impl World {
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
-        todo!("IMPLEMENT ME!")
+        todo!()
     }
 
     pub fn extend(&mut self, components: impl IntoComponentSource) -> &[Entity] {
@@ -294,7 +294,13 @@ impl World {
         Src: IntoComponentSource,
         Ext: for<'a> Extend<&'a Entity>,
     {
-        todo!("IMPLEMENT ME!")
+        // get the components.
+        // get the archetype index for the components. Possibly need to generate one if one.
+        // construct a writer for the components.
+        // write the components to the collection.
+        // get the inserted entities from the writer.
+        // write the new entities to out.
+        // remove any overwritten entities.
     }
 
     pub fn remove(&mut self, entity: Entity) -> bool {
@@ -308,7 +314,19 @@ impl World {
     }
 
     fn remove_at_location(&mut self, location: EntityLocation) {
-        todo!("IMPLEMENT ME!")
+        let component_index = location.component();
+        let entity_type_index = location.entity_type();
+        let mut entity_type = &mut self.entity_types[entity_type_index];
+        entity_type.swap_remove(component_index.id());
+        for type_id in entity_type.layout().component_types() {
+            let storage = self.components.get_mut(*type_id).unwrap();
+            storage.swap_remove(entity_type_index, component_index);
+        }
+
+        if entity_type.contains_component_value(component_index.id()) {
+            let swapped = entity_type.entities()[component_index.id()];
+            self.entities.set(swapped, location);
+        }
     }
 
     pub fn clear(&mut self) {

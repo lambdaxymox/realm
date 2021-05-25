@@ -29,7 +29,7 @@ pub struct EntityLayout {
 }
 
 impl EntityLayout {
-    pub fn components(&self) -> &[ComponentTypeIndex] {
+    pub fn component_types(&self) -> &[ComponentTypeIndex] {
         &self.components
     }
 }
@@ -46,6 +46,34 @@ pub struct EntityType {
 impl EntityType {
     pub fn entities(&self) -> &[Entity] {
         &self.entities
+    }
+
+    pub(crate) fn swap_remove(&mut self, entity_index: usize) -> Entity {
+        let removed = self.entities.swap_remove(entity_index);
+
+        removed
+    }
+
+    pub(crate) fn layout(&self) -> &EntityLayout {
+        &self.layout
+    }
+
+    pub(crate) fn contains_component_value(&self, index: usize) -> bool {
+        index < self.entities.len()
+    }
+}
+
+impl ops::Index<EntityTypeIndex> for Vec<EntityType> {
+    type Output = EntityType;
+
+    fn index(&self, index: EntityTypeIndex) -> &Self::Output {
+        &self[index.id]
+    }
+}
+
+impl ops::IndexMut<EntityTypeIndex> for Vec<EntityType> {
+    fn index_mut(&mut self, index: EntityTypeIndex) -> &mut Self::Output {
+        &mut self[index.id]
     }
 }
 
@@ -144,6 +172,10 @@ impl EntityLocationMap {
 
     pub fn get(&self, entity: Entity) -> Option<EntityLocation> {
         self.locations.get(&entity).map(|idx| *idx)
+    }
+
+    pub fn set(&mut self, entity: Entity, location: EntityLocation) -> Option<EntityLocation> {
+        self.locations.insert(entity, location)
     }
 
     pub fn remove(&mut self, entity: Entity) -> Option<EntityLocation> {
