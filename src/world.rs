@@ -342,7 +342,7 @@ impl World {
     fn remove_at_location(&mut self, location: EntityLocation) {
         let component_index = location.component();
         let entity_type_index = location.entity_type();
-        let mut entity_type = &mut self.entity_types[entity_type_index];
+        let entity_type = &mut self.entity_types[entity_type_index];
         entity_type.swap_remove(component_index.id());
         for type_id in entity_type.layout().component_types() {
             let storage = self.components.get_mut(*type_id).unwrap();
@@ -356,7 +356,10 @@ impl World {
     }
 
     pub fn clear(&mut self) {
-        todo!("IMPLEMENT ME!")
+        let entities: Vec<Entity> = self.entities.iter().map(|e| *e).collect();
+        for entity in entities.iter() {
+            self.remove(*entity);
+        }
     }
 
     pub fn components(&self) -> &ComponentMap {

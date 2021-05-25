@@ -181,6 +181,10 @@ impl EntityLocationMap {
         self.locations.contains_key(&entity)
     }
 
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &Entity> {
+        self.locations.keys()
+    }
+
     pub fn get(&self, entity: Entity) -> Option<EntityLocation> {
         self.locations.get(&entity).map(|idx| *idx)
     }
