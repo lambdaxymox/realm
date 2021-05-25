@@ -110,7 +110,10 @@ impl<'a> Entry<'a> {
     }
 
     pub fn has_component<T: Component + StoreComponentsIn>(&self) -> bool {
-        todo!()
+        let entity_type_index = self.location.entity_type();
+        let entity_type = &self.world.entity_types[entity_type_index];
+        
+        entity_type.contains_component::<T>()
     }
 }
 
@@ -290,9 +293,13 @@ impl World {
     }
 
     pub fn has_component<T: Component + StoreComponentsIn>(&self, entity: Entity) -> bool {
-        /// Look up the entity type for the entity.
-        /// check that the entity type has the component type.
-        todo!()
+        if let Some(location) = self.entities.get(entity) {
+            let entity_type_index = location.entity_type();
+            let entity_type = &self.entity_types[entity_type_index];
+            entity_type.contains_component::<T>()
+        } else {
+            false
+        }
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
