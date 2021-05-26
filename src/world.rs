@@ -202,6 +202,18 @@ impl<'a> EntityTypeWriter<'a> {
     }
 }
 
+pub enum FilterMatch {
+    Match,
+    Mismatch,
+}
+
+pub trait LayoutFilter {
+    fn matches_layout(&self, components: &[ComponentTypeIndex]) -> FilterMatch;
+}
+
+pub trait EntityTypeSource {
+    fn layout(&mut self) -> EntityLayout;
+}
 
 pub trait ComponentSource {
     fn push_components<'a>(
@@ -315,6 +327,14 @@ impl World {
         }
     }
 
+    fn get_entity_type_for_components<T>(&mut self, components: &mut T) -> EntityTypeIndex 
+    where
+        T: 
+    {
+        // First check for one. 
+        todo!()
+    }
+
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
         todo!()
     }
@@ -333,11 +353,11 @@ impl World {
         Src: IntoComponentSource,
         Ext: for<'a> Extend<&'a Entity>,
     {
-        let replaced = {
+        let replaced_entities = {
             let mut components = components.into();
-            let entity_type_index = todo!();
+            let entity_type_index = self.get_entity_type_for_components(&mut components);
             let entity_type = &mut self.entity_types[entity_type_index];
-            let mut writer = EntityTypeWriter::new(
+            let writer = EntityTypeWriter::new(
                 entity_type_index,
                 entity_type,
                 self.components.get_multi_view_mut()
@@ -349,7 +369,7 @@ impl World {
             replaced
         };
 
-        for location in replaced {
+        for location in replaced_entities {
             self.remove_at_location(location);
         }
     }
