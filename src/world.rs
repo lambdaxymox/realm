@@ -202,20 +202,19 @@ impl<'a> EntityTypeWriter<'a> {
     }
 }
 
-pub enum FilterMatch {
-    Match,
-    Mismatch,
-}
-
 pub trait LayoutFilter {
-    fn matches_layout(&self, components: &[ComponentTypeIndex]) -> FilterMatch;
+    fn matches_layout(&self, components: &[ComponentTypeIndex]) -> bool;
 }
 
 pub trait EntityTypeSource {
+    type Filter: LayoutFilter;
+
+    fn filter(&self) -> Self::Filter;
+
     fn layout(&mut self) -> EntityLayout;
 }
 
-pub trait ComponentSource {
+pub trait ComponentSource: EntityTypeSource {
     fn push_components<'a>(
         &mut self,
         writer: &mut EntityTypeWriter<'a>,
@@ -225,6 +224,41 @@ pub trait ComponentSource {
 
 pub struct SingleEntity<T> {
     data: T,
+}
+
+use std::marker::PhantomData;
+
+pub struct PairFilter<T1, T2> {
+    _marker: PhantomData<(T1, T2)>,
+}
+
+unsafe impl<T1, T2> Send for PairFilter<T1, T2> {}
+unsafe impl<T1, T2> Sync for PairFilter<T1, T2> {}
+
+impl<T1, T2> LayoutFilter for PairFilter<T1, T2>
+where
+    T1: Component,
+    T2: Component,
+{
+    fn matches_layout(&self, components: &[ComponentTypeIndex]) -> bool {
+        todo!("IMPLEMENT ME!")
+    }
+}
+
+impl<T1, T2> EntityTypeSource for SingleEntity<(T1, T2)>
+where
+    T1: Component,
+    T2: Component,
+{
+    type Filter = PairFilter<T1, T2>;
+
+    fn filter(&self) -> Self::Filter {
+        todo!("IMPLEMENT ME!")
+    }
+
+    fn layout(&mut self) -> EntityLayout {
+        todo!("IMPLEMENT ME!")
+    }
 }
 
 impl<T1, T2> ComponentSource for SingleEntity<(T1, T2)> 
@@ -329,9 +363,27 @@ impl World {
 
     fn get_entity_type_for_components<T>(&mut self, components: &mut T) -> EntityTypeIndex 
     where
-        T: 
+        T: EntityTypeSource
     {
-        // First check for one. 
+        let search_entities = |filter: &T::Filter| -> Option<EntityTypeIndex> {
+            for entity_type in self.entity_types.iter() {
+                if filter.matches_layout(entity_type.layout().component_types()) {
+                    return Some(entity_type.index());
+                }
+            }
+
+            None
+        };
+
+        let index = search_entities(&components.filter());
+        if let Some(value) = index {
+            value
+        } else {
+            self.insert_entity_type(components.layout())
+        }
+    }
+
+    fn insert_entity_type(&mut self, layout: EntityLayout) -> EntityTypeIndex {
         todo!()
     }
 

@@ -60,6 +60,10 @@ impl EntityType {
         removed
     }
 
+    pub(crate) fn index(&self) -> EntityTypeIndex {
+        self.index
+    }
+
     #[inline]
     pub(crate) fn layout(&self) -> &EntityLayout {
         &self.layout
