@@ -33,6 +33,22 @@ impl EntityLayout {
         &self.components
     }
 
+    pub fn get_constructor_unchecked(
+        &self, 
+        index: ComponentTypeIndex
+    ) -> &fn() -> Box<dyn OpaqueComponentStorage>
+    {
+        let mut idx = 0;
+        for (i, type_id) in self.components.iter().enumerate() {
+            if type_id == &index {
+                idx = i;
+                break;
+            }
+        }
+
+        &self.constructors[idx]
+    }
+
     pub fn constructors(&self) -> &[fn() -> Box<dyn OpaqueComponentStorage>] {
         &self.constructors
     }

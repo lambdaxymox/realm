@@ -409,17 +409,19 @@ impl World {
         let entity_type_index = EntityTypeIndex::new(self.entity_types.len());
         self.entity_types.push(EntityType::new(entity_type_index, layout));
         let entity_type = &self.entity_types[self.entity_types.len() - 1];
-        let missing_components = entity_type
+        let missing_components: Vec<ComponentTypeIndex> = entity_type
             .layout()
             .component_types()
             .iter()
             .filter(|type_id| {
                 self.components.contains_component_id(**type_id)
-            });
+            })
+            .map(|p| *p)
+            .collect();
 
-        for component_index in missing_components {
-            self.components.get_or_insert_with(*component_index, || { 
-                entity_type.layout().constructors()[component_index.id()]
+        for missing_component in missing_components.iter() {
+            self.components.get_or_insert_with(*missing_component, || { 
+                entity_type.layout().get_constructor_unchecked(*missing_component)()
             });
         }
 
