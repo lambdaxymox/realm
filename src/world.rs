@@ -15,6 +15,7 @@ use crate::storage::{
     EntityLocation,
     StoreComponentsIn,
     ComponentStorage,
+    ComponentIndex,
 };
 use downcast::{
     Downcast,
@@ -63,6 +64,10 @@ impl ComponentMap {
     pub fn contains_component<T: Component + StoreComponentsIn>(&self) -> bool {
         let component_type = ComponentTypeIndex::of::<T>();
         self.data.contains_key(&component_type)
+    }
+
+    pub fn get_multi_view_mut(&mut self) -> MultiViewMut {
+        MultiViewMut::new(self)
     }
 }
 
@@ -186,6 +191,14 @@ impl<'a> EntityTypeWriter<'a> {
 
     pub fn entity_type(&self) -> &EntityType {
         &self.entity_type
+    }
+
+    pub fn inserted(&self) -> (ComponentIndex, &[Entity]) {
+        let start = self.initial_count;
+        let index = ComponentIndex::new(start);
+        let slice = &self.entity_type.entities()[start..];
+        
+        (index, slice)
     }
 }
 
@@ -320,13 +333,25 @@ impl World {
         Src: IntoComponentSource,
         Ext: for<'a> Extend<&'a Entity>,
     {
-        // get the components.
-        // get the archetype index for the components. Possibly need to generate one if one.
-        // construct a writer for the components.
-        // write the components to the collection.
-        // get the inserted entities from the writer.
-        // write the new entities to out.
-        // remove any overwritten entities.
+        let replaced = {
+            let mut components = components.into();
+            let entity_type_index = todo!();
+            let entity_type = &mut self.entity_types[entity_type_index];
+            let mut writer = EntityTypeWriter::new(
+                entity_type_index,
+                entity_type,
+                self.components.get_multi_view_mut()
+            );
+            let (base, new_entities) = writer.inserted();
+            let replaced = self.entities.insert(new_entities, entity_type_index, base);
+            out.extend(new_entities.iter());
+
+            replaced
+        };
+
+        for location in replaced {
+            self.remove_at_location(location);
+        }
     }
 
     pub fn remove(&mut self, entity: Entity) -> bool {

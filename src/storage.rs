@@ -115,7 +115,7 @@ pub struct ComponentIndex {
 
 impl ComponentIndex {
     #[inline]
-    fn new(id: usize) -> ComponentIndex {
+    pub fn new(id: usize) -> ComponentIndex {
         ComponentIndex {
             id: id,
         }
@@ -159,7 +159,7 @@ impl EntityLocationMap {
         }
     }
 
-    fn insert(
+    pub(crate) fn insert(
         &mut self, 
         entities: &[Entity],
         entity_type: EntityTypeIndex, 
