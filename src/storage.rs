@@ -33,6 +33,10 @@ impl EntityLayout {
         &self.components
     }
 
+    pub fn constructors(&self) -> &[fn() -> Box<dyn OpaqueComponentStorage>] {
+        &self.constructors
+    }
+
     #[inline]
     pub(crate) fn contains_component<T: Component>(&self) -> bool {
         let type_id = ComponentTypeIndex::of::<T>();
@@ -50,6 +54,14 @@ pub struct EntityType {
 }
 
 impl EntityType {
+    pub(crate) fn new(index: EntityTypeIndex, layout: EntityLayout) -> Self {
+        Self {
+            index: index,
+            entities: Vec::new(),
+            layout: Arc::new(layout),
+        }
+    }
+
     pub fn entities(&self) -> &[Entity] {
         &self.entities
     }
@@ -65,7 +77,7 @@ impl EntityType {
     }
 
     #[inline]
-    pub(crate) fn layout(&self) -> &EntityLayout {
+    pub(crate) fn layout(&self) -> &Arc<EntityLayout> {
         &self.layout
     }
 
@@ -99,7 +111,7 @@ pub struct EntityTypeIndex {
 
 impl EntityTypeIndex {
     #[inline]
-    fn new(id: usize) -> EntityTypeIndex {
+    pub(crate) fn new(id: usize) -> EntityTypeIndex {
         EntityTypeIndex {
             id: id,
         }

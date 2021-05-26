@@ -25,6 +25,9 @@ use std::collections::{
     HashSet,
 };
 use std::mem;
+use std::ops::{
+    DerefMut,
+};
 
 
 /// where the components live in a world.
@@ -37,6 +40,21 @@ impl ComponentMap {
         Self {
             data: HashMap::new(),
         }
+    }
+
+    pub fn get_or_insert_with<F>(
+        &mut self,
+        index: ComponentTypeIndex,
+        mut constructor: F,
+    ) -> &mut dyn OpaqueComponentStorage
+    where
+        F: FnMut() -> Box<dyn OpaqueComponentStorage>,
+    {
+        let new_storage = self.data
+            .entry(index)
+            .or_insert_with(|| constructor());
+        
+        new_storage.deref_mut()
     }
 
     fn get(&self, component_type: ComponentTypeIndex) -> Option<&dyn OpaqueComponentStorage> {
@@ -64,6 +82,10 @@ impl ComponentMap {
     pub fn contains_component<T: Component + StoreComponentsIn>(&self) -> bool {
         let component_type = ComponentTypeIndex::of::<T>();
         self.data.contains_key(&component_type)
+    }
+
+    pub(crate) fn contains_component_id(&self, index: ComponentTypeIndex) -> bool {
+        self.data.contains_key(&index)
     }
 
     pub fn get_multi_view_mut(&mut self) -> MultiViewMut {
@@ -384,7 +406,24 @@ impl World {
     }
 
     fn insert_entity_type(&mut self, layout: EntityLayout) -> EntityTypeIndex {
-        todo!()
+        let entity_type_index = EntityTypeIndex::new(self.entity_types.len());
+        self.entity_types.push(EntityType::new(entity_type_index, layout));
+        let entity_type = &self.entity_types[self.entity_types.len() - 1];
+        let missing_components = entity_type
+            .layout()
+            .component_types()
+            .iter()
+            .filter(|type_id| {
+                self.components.contains_component_id(**type_id)
+            });
+
+        for component_index in missing_components {
+            self.components.get_or_insert_with(*component_index, || { 
+                entity_type.layout().constructors()[component_index.id()]
+            });
+        }
+
+        entity_type_index
     }
 
     pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
