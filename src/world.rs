@@ -414,7 +414,7 @@ impl World {
             .component_types()
             .iter()
             .filter(|type_id| {
-                self.components.contains_component_id(**type_id)
+                !self.components.contains_component_id(**type_id)
             })
             .map(|p| *p)
             .collect();
@@ -428,8 +428,11 @@ impl World {
         entity_type_index
     }
 
-    pub fn push<Src: IntoComponentSource>(&mut self, components: Src) -> Entity {
-        todo!()
+    pub fn push<Src>(&mut self, components: Src) -> Entity
+    where
+        Src: IntoComponentSource,
+    {
+        struct 
     }
 
     pub fn extend(&mut self, components: impl IntoComponentSource) -> &[Entity] {
