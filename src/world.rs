@@ -319,7 +319,13 @@ where
     T2: Component,
 {
     fn matches_layout(&self, components: &[ComponentTypeIndex]) -> bool {
-        todo!("IMPLEMENT ME!")
+        let type_array = [
+            ComponentTypeIndex::of::<T1>(), 
+            ComponentTypeIndex::of::<T2>()
+        ];
+
+        type_array.len() == components.len() 
+            && type_array.iter().all(|type_id| components.contains(type_id))
     }
 }
 
