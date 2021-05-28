@@ -244,6 +244,62 @@ pub trait ComponentSource: EntityTypeSource {
     );
 }
 
+impl<T> LayoutFilter for Option<T> where T: LayoutFilter {
+    fn matches_layout(&self, components: &[ComponentTypeIndex]) -> bool {
+        match self {
+            Some(filter) => {
+                filter.matches_layout(components)
+            }
+            None => false,
+        }
+    }
+}
+
+impl<T> EntityTypeSource for Option<T> where T: EntityTypeSource {
+    type Filter = Option<T::Filter>;
+
+    fn filter(&self) -> Self::Filter {
+        match self {
+            Some(provider) => Some(provider.filter()),
+            None => None,
+        }
+    }
+
+    fn layout(&mut self) -> EntityLayout {
+        match self {
+            Some(provider) => provider.layout(),
+            None => EntityLayout::default()
+        }
+    }
+}
+
+impl<T> ComponentSource for Option<T> where T: ComponentSource {
+    fn push_components<'a>(
+        &mut self,
+        writer: &mut EntityTypeWriter<'a>,
+        entities: impl Iterator<Item = Entity>,
+    ) {
+        match self {
+            Some(provider) => {
+                <T as ComponentSource>::push_components(provider, writer, entities)
+            }
+            None => {}
+        }
+    }
+}
+
+impl<T> IntoComponentSource for Option<T> where T: IntoComponentSource {
+    type Source = Option<T::Source>;
+    
+    fn into(self) -> Self::Source {
+        match self {
+            Some(provider) => Some(provider.into()),
+            None => None,
+        }
+    }
+}
+
+
 pub struct SingleEntity<T> {
     data: T,
 }
@@ -430,9 +486,22 @@ impl World {
 
     pub fn push<Src>(&mut self, components: Src) -> Entity
     where
-        Src: IntoComponentSource,
+        Option<Src>: IntoComponentSource,
     {
-        struct 
+        struct Single(Option<Entity>);
+
+        impl<'a> Extend<&'a Entity> for Single {
+            fn extend<I: IntoIterator<Item = &'a Entity>>(&mut self, iter: I) {
+                debug_assert!(self.0.is_none());
+                let mut iter = iter.into_iter();
+                self.0 = iter.next().copied();
+                debug_assert!(iter.next().is_none());
+            }
+        }
+
+        let mut src = Single(None);
+        self.extend_out(Some(components), &mut src);
+        src.0.unwrap()
     }
 
     pub fn extend(&mut self, components: impl IntoComponentSource) -> &[Entity] {

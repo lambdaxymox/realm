@@ -22,7 +22,7 @@ use std::ptr;
 
 /// The components in an entity, along with the constructors to contruct another instance of 
 /// and entity kind.
-#[derive(Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct EntityLayout {
     components: Vec<ComponentTypeIndex>,
     constructors: Vec<fn() -> Box<dyn OpaqueComponentStorage>>,
