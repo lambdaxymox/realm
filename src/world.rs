@@ -195,8 +195,8 @@ impl<'a> EntityTypeWriter<'a> {
         }
     }
 
-    pub fn insert(&mut self, entity: Entity) {
-        todo!()
+    pub fn push(&mut self, entity: Entity) {
+        todo!("IMPLEMENT ME!")
     }
 
     pub fn claim_components<T: Component + StoreComponentsIn>(&mut self) -> ComponentWriter<'a, T> {
@@ -337,7 +337,9 @@ where
     type Filter = PairFilter<T1, T2>;
 
     fn filter(&self) -> Self::Filter {
-        todo!("IMPLEMENT ME!")
+        PairFilter {
+            _marker: PhantomData,
+        }
     }
 
     fn layout(&mut self) -> EntityLayout {
@@ -347,15 +349,23 @@ where
 
 impl<T1, T2> ComponentSource for SingleEntity<(T1, T2)> 
 where
-    T1: Component,
-    T2: Component,
+    T1: Component + StoreComponentsIn,
+    T2: Component + StoreComponentsIn,
 {
     fn push_components<'a>(
         &mut self,
         writer: &mut EntityTypeWriter<'a>,
-        entities: impl Iterator<Item = Entity>,
+        mut entities: impl Iterator<Item = Entity>,
     ) {
-        todo!("IMPLEMENT ME!")
+        let entity = entities.next();
+        debug_assert!(entity.is_some());
+        writer.push(entity.unwrap());
+        let mut writer_t1 = writer.claim_components::<T1>();
+        let mut writer_t2 = writer.claim_components::<T2>();
+        unsafe {
+            writer_t1.extend_memcopy(&self.data.0 as *const T1, 1);
+            writer_t2.extend_memcopy(&self.data.1 as *const T2, 1);
+        }
     }
 }
 
@@ -368,8 +378,8 @@ pub trait IntoComponentSource {
 
 impl<T1, T2> IntoComponentSource for (T1, T2)
 where 
-    T1: Component, 
-    T2: Component,
+    T1: Component + StoreComponentsIn, 
+    T2: Component + StoreComponentsIn,
 {
     type Source = SingleEntity<(T1, T2)>;
 
