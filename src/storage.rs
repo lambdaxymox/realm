@@ -296,7 +296,11 @@ impl<'a, T> ComponentViewMut<'a, T>{
     }
 }
 
-
+impl<'a, T: Component> Clone for ComponentViewMut<'a, T> {
+    fn clone(&self) -> Self {
+        todo!("IMPLEMENT ME!")
+    }
+}
 
 impl<'a, T: Component> ops::Deref for ComponentViewMut<'a, T> {
     type Target = [T];

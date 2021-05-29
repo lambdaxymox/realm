@@ -14,6 +14,9 @@ use crate::storage::{
     ComponentMetadata,
     ComponentIndex,
 };
+use std::ptr::{
+    NonNull,
+};
 use std::slice::{
     Iter,
     IterMut,
@@ -52,6 +55,7 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
 pub struct PackedStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
+    slices: Vec<(NonNull<T>, usize)>,
     allocations: Vec<ComponentVec<T>>,
 }
 
@@ -62,6 +66,20 @@ impl<T> PackedStorage<T>
 where
     T: Component
 {
+    fn swap_remove_internal(
+        &mut self, 
+        entity_type: EntityTypeIndex, 
+        index: ComponentIndex
+    ) -> T
+    {
+        let slice_index = self.indices[entity_type.id()];
+        let allocation = &mut self.allocations[slice_index];
+        let component = allocation.swap_remove(index.id());
+        self.length -= 1;
+
+        component
+    }
+
     fn index(&self, entity_type_index: EntityTypeIndex) -> usize {
         self.indices[entity_type_index.id()]
     }
@@ -75,6 +93,7 @@ where
         Self {
             length: 0,
             indices: Vec::new(),
+            slices: Vec::new(),
             allocations: Vec::new(),
         }
     }
@@ -89,7 +108,7 @@ where
     }
 
     fn swap_remove(&mut self, entity_type: EntityTypeIndex, index: ComponentIndex) {
-        todo!("IMPLEMENT ME!")
+        self.swap_remove_internal(entity_type, index);
     }
 
     fn get_bytes(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)> {
