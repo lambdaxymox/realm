@@ -318,7 +318,7 @@ pub struct ComponentMetadata {
 }
 
 impl ComponentMetadata {
-    fn of<T: Component>() -> ComponentMetadata {
+    pub(crate) fn of<T: Component>() -> ComponentMetadata {
         let drop_fn: Option<fn(*mut u8)> = if mem::needs_drop::<T>() {
             Some(|ptr| unsafe {
                 ptr::drop_in_place(ptr as *mut T)

@@ -55,7 +55,9 @@ impl<T> PackedStorage<T>
 where
     T: Component
 {
-
+    fn index(&self, entity_type_index: EntityTypeIndex) -> usize {
+        self.indices[entity_type_index.id()]
+    }
 }
 
 impl<T> Default for PackedStorage<T> 
@@ -76,7 +78,7 @@ where
     T: Component
 {
     fn metadata(&self) -> ComponentMetadata {
-        todo!("IMPLEMENT ME!")
+        ComponentMetadata::of::<T>()
     }
 
     fn swap_remove(&mut self, entity_type: EntityTypeIndex, index: ComponentIndex) {
