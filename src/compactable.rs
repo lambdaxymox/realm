@@ -29,11 +29,11 @@ use std::slice::{
 };
 
 #[derive(Clone, Debug)]
-struct ComponentVec<T> {
+struct ComponentArray<T> {
     data: Vec<T>,
 }
 
-impl<T> ComponentVec<T> {
+impl<T> ComponentArray<T> {
     fn new() -> Self {
         Self {
             data: Vec::new(),
@@ -62,7 +62,7 @@ impl<T> ComponentVec<T> {
     }
 }
 
-impl<T> Deref for ComponentVec<T> {
+impl<T> Deref for ComponentArray<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -73,7 +73,7 @@ impl<T> Deref for ComponentVec<T> {
     }
 }
 
-impl<T> DerefMut for ComponentVec<T> {
+impl<T> DerefMut for ComponentArray<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let (ptr, len) = self.as_raw_slice();
         unsafe {
@@ -114,7 +114,7 @@ pub struct CompactableStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
     views: Vec<(NonNull<T>, usize)>,
-    components: Vec<ComponentVec<T>>,
+    components: Vec<ComponentArray<T>>,
 }
 
 unsafe impl<T: Component> Send for CompactableStorage<T> {}
@@ -242,7 +242,7 @@ where
     /// Create a new slice for the given Entity type.
     fn insert_entity_type(&mut self, entity_type_index: EntityTypeIndex) {
         let view_index = self.views.len();
-        let component_array = ComponentVec::<T>::new();
+        let component_array = ComponentArray::<T>::new();
 
         self.views.insert(view_index, component_array.as_raw_slice());
         self.components.insert(view_index, component_array);
@@ -277,7 +277,7 @@ where
                 dst_storage.extend_memcopy_raw(dst, ptr, len);
             }
 
-            let mut swapped_components = ComponentVec::<T>::new();
+            let mut swapped_components = ComponentArray::<T>::new();
             mem::swap(&mut self.components[src_index], &mut swapped_components);
             mem::forget(swapped_components);
         } else {
@@ -286,7 +286,7 @@ where
                 dst_storage.extend_memcopy_raw(dst, ptr, len);
             }
 
-            let mut swapped_components = ComponentVec::<T>::new();
+            let mut swapped_components = ComponentArray::<T>::new();
             mem::swap(&mut self.components[src_index], &mut swapped_components);
             mem::forget(swapped_components);
         }
