@@ -160,8 +160,12 @@ where
         Some((ptr.as_ptr() as *mut u8, *len_bytes))
     }
 
-    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len_bytes: usize) {
-        todo!("IMPLEMENT ME!")
+    unsafe fn extend_memcopy_raw(&mut self, entity_type_index: EntityTypeIndex, ptr: *const u8, count: usize) {
+        let view_index = self.index(entity_type_index);
+        let component = &mut self.components[view_index];
+        component.extend_memcopy(ptr as *const T, count);
+        self.views[view_index] = component.as_raw_slice();
+        self.length += count;
     }
 
     /// Move a component from one entity type to another entity type.
@@ -188,22 +192,27 @@ where
         mem::forget(value);
     }
 
+    /// Move a component from one storage to another storage.
+    fn transfer_component(
+        &mut self,
+        src: EntityTypeIndex,
+        src_component: ComponentIndex,
+        dst: EntityTypeIndex,
+        dst_storage: &mut dyn OpaqueComponentStorage,
+    ) {
+        let component = self.swap_remove_internal(src, src_component);
+        unsafe {
+            dst_storage.extend_memcopy_raw(dst, &component as *const T as *const u8, 1);
+        }
+        mem::forget(component);
+    }
+
     /// Move all the components of a given entity type from one storage to the
     /// other storage.
     fn transfer_entity_type(
         &mut self,
         src: EntityTypeIndex, 
         dst: EntityTypeIndex, 
-        dst_storage: &mut dyn OpaqueComponentStorage,
-    ) {
-        todo!("IMPLEMENT ME!")
-    }
-
-    /// Move a component from one storage to another storage.
-    fn transfer_component(
-        &mut self,
-        src: EntityTypeIndex,
-        dst: EntityTypeIndex,
         dst_storage: &mut dyn OpaqueComponentStorage,
     ) {
         todo!("IMPLEMENT ME!")

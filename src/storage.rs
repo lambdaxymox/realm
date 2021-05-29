@@ -376,7 +376,7 @@ pub trait OpaqueComponentStorage: Downcast + Send + Sync {
 
     unsafe fn get_bytes_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)>;
 
-    unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len_bytes: usize);
+    unsafe fn extend_memcopy_raw(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, count: usize);
 
     /// Move all the components of a given entity type from one storage to the
     /// other storage.
@@ -391,6 +391,7 @@ pub trait OpaqueComponentStorage: Downcast + Send + Sync {
     fn transfer_component(
         &mut self,
         src: EntityTypeIndex,
+        src_component: ComponentIndex,
         dst: EntityTypeIndex,
         dst_storage: &mut dyn OpaqueComponentStorage,
     );
