@@ -82,17 +82,17 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
     }
 }
 
-pub struct PackedStorage<T: Component> {
+pub struct CompactableStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
     views: Vec<(NonNull<T>, usize)>,
     components: Vec<ComponentVec<T>>,
 }
 
-unsafe impl<T: Component> Send for PackedStorage<T> {}
-unsafe impl<T: Component> Sync for PackedStorage<T> {}
+unsafe impl<T: Component> Send for CompactableStorage<T> {}
+unsafe impl<T: Component> Sync for CompactableStorage<T> {}
 
-impl<T> PackedStorage<T>
+impl<T> CompactableStorage<T>
 where
     T: Component
 {
@@ -105,6 +105,7 @@ where
         let view_index = self.indices[entity_type.id()];
         let allocation = &mut self.components[view_index];
         let component = allocation.swap_remove(index.id());
+        self.update_view(view_index);
         self.length -= 1;
 
         component
@@ -114,12 +115,12 @@ where
         self.indices[entity_type_index.id()]
     }
 
-    fn update_slice(&mut self, slice_index: usize) {
-        self.views[slice_index] = self.components[slice_index].as_raw_slice();
+    fn update_view(&mut self, view_index: usize) {
+        self.views[view_index] = self.components[view_index].as_raw_slice();
     }
 }
 
-impl<T> Default for PackedStorage<T> 
+impl<T> Default for CompactableStorage<T> 
 where
     T: Component,
 {
@@ -133,7 +134,7 @@ where
     }
 }
 
-impl<T> OpaqueComponentStorage for PackedStorage<T>
+impl<T> OpaqueComponentStorage for CompactableStorage<T>
 where
     T: Component
 {
@@ -181,8 +182,8 @@ where
             dst_components.extend_memcopy(&value as *const T, 1);
         }
 
-        self.update_slice(src_view_index);
-        self.update_slice(dst_view_index);
+        self.update_view(src_view_index);
+        self.update_view(dst_view_index);
 
         mem::forget(value);
     }
@@ -214,7 +215,7 @@ where
     }
 }
 
-impl<'a, T> ComponentStorage<'a, T> for PackedStorage<T>
+impl<'a, T> ComponentStorage<'a, T> for CompactableStorage<T>
 where 
     T: Component,
 {

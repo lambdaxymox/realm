@@ -3,7 +3,7 @@ use crate::component::{
     ComponentTypeIndex,
 };
 use crate::dense::{
-    PackedStorage,
+    CompactableStorage,
 };
 use crate::entity::{
     Entity,
@@ -609,6 +609,6 @@ impl<T> StoreComponentsIn for T
 where
     T: Component
 {
-    type Storage = PackedStorage<T>;
+    type Storage = CompactableStorage<T>;
 }
 
