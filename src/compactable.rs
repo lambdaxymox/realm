@@ -28,33 +28,47 @@ use std::slice::{
     IterMut,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+struct RawComponentArray<T> {
+    ptr: NonNull<T>,
+    capacity: usize,
+}
+
+impl<T> RawComponentArray<T> {
+    fn with_capacity(capacity: usize) -> Self {
+        todo!("IMPLEMENT ME!")
+    }
+}
+
+#[derive(Debug)]
 struct ComponentArray<T> {
-    data: Vec<T>,
+    inner: RawComponentArray<T>,
+    length: usize,
+    capacity: usize,
 }
 
 impl<T> ComponentArray<T> {
     fn new() -> Self {
         Self {
-            data: Vec::new(),
+            inner: RawComponentArray::with_capacity(0),
+            length: 0,
+            capacity: 0,
         }
     }
 
     #[inline]
     fn swap_remove(&mut self, index: usize) -> T {
-        self.data.swap_remove(index)
+        todo!("IMPLEMENT ME!")
     }
 
     #[inline]
     fn as_raw_slice(&self) -> (NonNull<T>, usize) {
-        todo!("IMPLEMENT ME!");
-        let raw_ptr = self.data.as_mut_ptr();
-        let len = self.data.len();
+        let raw_ptr = self.inner.ptr.as_ptr();
         let ptr = unsafe {
             NonNull::new_unchecked(raw_ptr)
         };
 
-        (ptr, len)
+        (ptr, self.length)
     }
 
     unsafe fn extend_memcopy(&mut self, ptr: *const T, count: usize) {
