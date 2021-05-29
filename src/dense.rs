@@ -14,6 +14,7 @@ use crate::storage::{
     ComponentMetadata,
     ComponentIndex,
 };
+use std::mem;
 use std::ptr::{
     NonNull,
 };
@@ -22,7 +23,36 @@ use std::slice::{
     IterMut,
 };
 
-type ComponentVec<T> = Vec<T>;
+#[derive(Clone, Debug)]
+struct ComponentVec<T> {
+    data: Vec<T>,
+}
+
+impl<T> ComponentVec<T>
+where
+    T: Component,
+{
+    #[inline]
+    fn swap_remove(&mut self, index: usize) -> T {
+        self.data.swap_remove(index)
+    }
+
+    #[inline]
+    fn as_raw_slice(&self) -> (NonNull<T>, usize) {
+        todo!("IMPLEMENT ME!");
+        let raw_ptr = self.data.as_mut_ptr();
+        let len = self.data.len();
+        let ptr = unsafe {
+            NonNull::new_unchecked(raw_ptr)
+        };
+
+        (ptr, len)
+    }
+
+    unsafe fn extend_memcopy(&mut self, ptr: *const T, count: usize) {
+        todo!("IMPLMENT ME!")
+    }
+}
 
 
 pub struct ComponentIter<'a, T> {
@@ -55,8 +85,8 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
 pub struct PackedStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
-    slices: Vec<(NonNull<T>, usize)>,
-    allocations: Vec<ComponentVec<T>>,
+    views: Vec<(NonNull<T>, usize)>,
+    components: Vec<ComponentVec<T>>,
 }
 
 unsafe impl<T: Component> Send for PackedStorage<T> {}
@@ -72,8 +102,8 @@ where
         index: ComponentIndex
     ) -> T
     {
-        let slice_index = self.indices[entity_type.id()];
-        let allocation = &mut self.allocations[slice_index];
+        let view_index = self.indices[entity_type.id()];
+        let allocation = &mut self.components[view_index];
         let component = allocation.swap_remove(index.id());
         self.length -= 1;
 
@@ -82,6 +112,10 @@ where
 
     fn index(&self, entity_type_index: EntityTypeIndex) -> usize {
         self.indices[entity_type_index.id()]
+    }
+
+    fn update_slice(&mut self, slice_index: usize) {
+        self.views[slice_index] = self.components[slice_index].as_raw_slice();
     }
 }
 
@@ -93,8 +127,8 @@ where
         Self {
             length: 0,
             indices: Vec::new(),
-            slices: Vec::new(),
-            allocations: Vec::new(),
+            views: Vec::new(),
+            components: Vec::new(),
         }
     }
 }
@@ -113,14 +147,14 @@ where
 
     fn get_bytes(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)> {
         let view_index = *self.indices.get(entity_type.id())?;
-        let (ptr, len_bytes) = self.slices.get(view_index)?;
+        let (ptr, len_bytes) = self.views.get(view_index)?;
 
         Some((ptr.as_ptr() as *const u8, *len_bytes))
     }
 
     unsafe fn get_bytes_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)> {
         let view_index = *self.indices.get(entity_type.id())?;
-        let (ptr, len_bytes) = self.slices.get(view_index)?;
+        let (ptr, len_bytes) = self.views.get(view_index)?;
 
         Some((ptr.as_ptr() as *mut u8, *len_bytes))
     }
@@ -129,10 +163,34 @@ where
         todo!("IMPLEMENT ME!")
     }
 
+    /// Move a component from one entity type to another entity type.
+    fn move_component(
+        &mut self,
+        src: EntityTypeIndex,
+        index: ComponentIndex,
+        dst: EntityTypeIndex,
+    ) {
+        let src_view_index = self.index(src);
+        let dst_view_index = self.index(dst);
+
+        let src_components = &mut self.components[src_view_index];
+        let value = src_components.swap_remove(index.id());
+
+        let dst_components = &mut self.components[dst_view_index];
+        unsafe {
+            dst_components.extend_memcopy(&value as *const T, 1);
+        }
+
+        self.update_slice(src_view_index);
+        self.update_slice(dst_view_index);
+
+        mem::forget(value);
+    }
+
     /// Move all the components of a given entity type from one storage to the
     /// other storage.
     fn transfer_entity_type(
-        &mut self, 
+        &mut self,
         src: EntityTypeIndex, 
         dst: EntityTypeIndex, 
         dst_storage: &mut dyn OpaqueComponentStorage,
@@ -146,16 +204,6 @@ where
         src: EntityTypeIndex,
         dst: EntityTypeIndex,
         dst_storage: &mut dyn OpaqueComponentStorage,
-    ) {
-        todo!("IMPLEMENT ME!")
-    }
-
-    /// Move a component from one entity type to another entity type.
-    fn move_component(
-        &mut self,
-        src: EntityTypeIndex,
-        index: ComponentIndex,
-        dst: EntityTypeIndex,
     ) {
         todo!("IMPLEMENT ME!")
     }
