@@ -2,7 +2,7 @@ use crate::component::{
     Component,
     ComponentTypeIndex,
 };
-use crate::dense::{
+use crate::compactable::{
     CompactableStorage,
 };
 use crate::entity::{

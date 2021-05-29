@@ -1,7 +1,7 @@
 extern crate downcast_rs as downcast;
 
 
-mod dense;
+mod compactable;
 mod entity;
 mod component;
 mod storage;
