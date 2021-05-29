@@ -230,6 +230,7 @@ impl EntityLocationMap {
     }
 }
 
+#[derive(Debug)]
 pub struct ComponentView<'a, T> {
     slice: &'a [T],
 }
@@ -245,6 +246,12 @@ impl<'a, T> ComponentView<'a, T>{
     #[inline]
     pub fn into_slice(self) -> &'a [T] {
         self.slice
+    }
+}
+
+impl<'a, T: Component> Clone for ComponentView<'a, T> {
+    fn clone(&self) -> Self {
+        ComponentView::new(self.slice)
     }
 }
 
@@ -270,6 +277,7 @@ impl<'a, T> ops::Index<ComponentIndex> for ComponentView<'a, T> {
     }
 }
 
+#[derive(Debug)]
 pub struct ComponentViewMut<'a, T> {
     slice: &'a mut [T],
 }
@@ -287,6 +295,8 @@ impl<'a, T> ComponentViewMut<'a, T>{
         self.slice
     }
 }
+
+
 
 impl<'a, T: Component> ops::Deref for ComponentViewMut<'a, T> {
     type Target = [T];

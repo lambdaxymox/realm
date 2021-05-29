@@ -14,19 +14,26 @@ use crate::storage::{
     ComponentMetadata,
     ComponentIndex,
 };
+use std::slice::{
+    Iter,
+    IterMut,
+};
 
 type ComponentVec<T> = Vec<T>;
 
 
 pub struct ComponentIter<'a, T> {
-    _marker: std::marker::PhantomData<&'a T>,
+    iter: Iter<'a, ComponentView<'a, T>>,
 }
 
-impl<'a, T> Iterator for ComponentIter<'a, T> {
+impl<'a, T> Iterator for ComponentIter<'a, T> 
+where
+    T: Component,
+{
     type Item = ComponentView<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!("IMPLEMENT ME!")
+        self.iter.next().cloned()
     }
 }
 
@@ -45,7 +52,7 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
 pub struct PackedStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
-    data: Vec<ComponentVec<T>>,
+    allocations: Vec<ComponentVec<T>>,
 }
 
 unsafe impl<T: Component> Send for PackedStorage<T> {}
@@ -68,7 +75,7 @@ where
         Self {
             length: 0,
             indices: Vec::new(),
-            data: Vec::new(),
+            allocations: Vec::new(),
         }
     }
 }
