@@ -30,7 +30,6 @@ fn test_entity_storage_one_element() {
     }
 
     let mut world = realm::World::new();
-    /*
     let entity = world.push((
         Position {
             x: 0_f32,
@@ -43,9 +42,8 @@ fn test_entity_storage_one_element() {
             z: 1_f32,
         }
     ));
-    */
 
     assert!(!world.is_empty());
-    // assert!(world.contains(entity));
+    assert!(world.contains(entity));
 }
 

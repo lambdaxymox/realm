@@ -2,6 +2,9 @@ use crate::component::{
     Component,
     ComponentTypeIndex,
 };
+use crate::dense::{
+    PackedStorage,
+};
 use crate::entity::{
     Entity,
     EntityAllocator,
@@ -601,4 +604,11 @@ impl World {
     }
 }
 
+
+impl<T> StoreComponentsIn for T
+where
+    T: Component
+{
+    type Storage = PackedStorage<T>;
+}
 

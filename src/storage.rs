@@ -388,6 +388,9 @@ pub trait OpaqueComponentStorage: Downcast + Send + Sync {
         index: ComponentIndex,
         dst: EntityTypeIndex,
     );
+
+    /// Create a new slice for the given Entity type.
+    fn insert_entity_type(&mut self, entity_type: EntityTypeIndex);
 }
 
 impl_downcast!(OpaqueComponentStorage);
