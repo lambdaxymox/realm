@@ -15,9 +15,14 @@ use crate::storage::{
     ComponentIndex,
 };
 use std::mem;
+use std::ops::{
+    Deref,
+    DerefMut,
+};
 use std::ptr::{
     NonNull,
 };
+use std::slice;
 use std::slice::{
     Iter,
     IterMut,
@@ -28,10 +33,13 @@ struct ComponentVec<T> {
     data: Vec<T>,
 }
 
-impl<T> ComponentVec<T>
-where
-    T: Component,
-{
+impl<T> ComponentVec<T> {
+    fn new() -> Self {
+        Self {
+            data: Vec::new(),
+        }
+    }
+
     #[inline]
     fn swap_remove(&mut self, index: usize) -> T {
         self.data.swap_remove(index)
@@ -51,6 +59,26 @@ where
 
     unsafe fn extend_memcopy(&mut self, ptr: *const T, count: usize) {
         todo!("IMPLMENT ME!")
+    }
+}
+
+impl<T> Deref for ComponentVec<T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        let (ptr, len) = self.as_raw_slice();
+        unsafe {
+            slice::from_raw_parts(ptr.as_ptr(), len)
+        }
+    }
+}
+
+impl<T> DerefMut for ComponentVec<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        let (ptr, len) = self.as_raw_slice();
+        unsafe {
+            slice::from_raw_parts_mut(ptr.as_ptr(), len)
+        }
     }
 }
 
@@ -202,9 +230,28 @@ where
     ) {
         let component = self.swap_remove_internal(src, src_component);
         unsafe {
-            dst_storage.extend_memcopy_raw(dst, &component as *const T as *const u8, 1);
+            dst_storage.extend_memcopy_raw(
+                dst, 
+                &component as *const T as *const u8, 
+                1
+            );
         }
         mem::forget(component);
+    }
+
+    /// Create a new slice for the given Entity type.
+    fn insert_entity_type(&mut self, entity_type_index: EntityTypeIndex) {
+        let view_index = self.views.len();
+        let component_array = ComponentVec::<T>::new();
+
+        self.views.insert(view_index, component_array.as_raw_slice());
+        self.components.insert(view_index, component_array);
+
+        if entity_type_index.id() >= self.indices.len() {
+            self.indices.resize(entity_type_index.id() + 1, usize::MAX);
+        }
+
+        self.indices[entity_type_index.id()] = view_index;
     }
 
     /// Move all the components of a given entity type from one storage to the
@@ -213,14 +260,39 @@ where
         &mut self,
         src: EntityTypeIndex, 
         dst: EntityTypeIndex, 
-        dst_storage: &mut dyn OpaqueComponentStorage,
+        dst_opaque_storage: &mut dyn OpaqueComponentStorage,
     ) {
-        todo!("IMPLEMENT ME!")
-    }
+        let dst_storage = dst_opaque_storage.downcast_mut::<Self>().unwrap();
+        let src_index = self.index(src);
+        let dst_index = dst_storage.index(dst);
 
-    /// Create a new slice for the given Entity type.
-    fn insert_entity_type(&mut self, entity_type: EntityTypeIndex) {
-        todo!("IMPLEMENT ME!")
+        let entity_count = self.components[src_index].len();
+        self.length -= entity_count;
+        dst_storage.length += entity_count;
+
+        if dst_storage.components[dst_index].len() == 0 {
+            // TODO: Optimize this path.
+            let (ptr, len) = self.get_bytes(src).unwrap();
+            unsafe {
+                dst_storage.extend_memcopy_raw(dst, ptr, len);
+            }
+
+            let mut swapped_components = ComponentVec::<T>::new();
+            mem::swap(&mut self.components[src_index], &mut swapped_components);
+            mem::forget(swapped_components);
+        } else {
+            let (ptr, len) = self.get_bytes(src).unwrap();
+            unsafe {
+                dst_storage.extend_memcopy_raw(dst, ptr, len);
+            }
+
+            let mut swapped_components = ComponentVec::<T>::new();
+            mem::swap(&mut self.components[src_index], &mut swapped_components);
+            mem::forget(swapped_components);
+        }
+
+        self.update_view(src_index);
+        dst_storage.update_view(dst_index);
     }
 }
 
