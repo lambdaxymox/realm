@@ -112,11 +112,17 @@ where
     }
 
     fn get_bytes(&self, entity_type: EntityTypeIndex) -> Option<(*const u8, usize)> {
-        todo!("IMPLEMENT ME!")
+        let view_index = *self.indices.get(entity_type.id())?;
+        let (ptr, len_bytes) = self.slices.get(view_index)?;
+
+        Some((ptr.as_ptr() as *const u8, *len_bytes))
     }
 
     unsafe fn get_bytes_mut(&mut self, entity_type: EntityTypeIndex) -> Option<(*mut u8, usize)> {
-        todo!("IMPLEMENT ME!")
+        let view_index = *self.indices.get(entity_type.id())?;
+        let (ptr, len_bytes) = self.slices.get(view_index)?;
+
+        Some((ptr.as_ptr() as *mut u8, *len_bytes))
     }
 
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const u8, len_bytes: usize) {
