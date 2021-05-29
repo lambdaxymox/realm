@@ -15,6 +15,8 @@ use crate::storage::{
     ComponentIndex,
 };
 
+type ComponentVec<T> = Vec<T>;
+
 
 pub struct ComponentIter<'a, T> {
     _marker: std::marker::PhantomData<&'a T>,
@@ -40,9 +42,14 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
     }
 }
 
-pub struct PackedStorage<T> {
-    _marker: std::marker::PhantomData<T>,
+pub struct PackedStorage<T: Component> {
+    length: usize,
+    indices: Vec<usize>,
+    data: Vec<ComponentVec<T>>,
 }
+
+unsafe impl<T: Component> Send for PackedStorage<T> {}
+unsafe impl<T: Component> Sync for PackedStorage<T> {}
 
 impl<T> PackedStorage<T>
 where
@@ -51,10 +58,15 @@ where
 
 }
 
-impl<T> Default for PackedStorage<T> {
+impl<T> Default for PackedStorage<T> 
+where
+    T: Component,
+{
     fn default() -> Self {
         Self {
-            _marker: std::marker::PhantomData,
+            length: 0,
+            indices: Vec::new(),
+            data: Vec::new(),
         }
     }
 }
