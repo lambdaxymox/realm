@@ -19,6 +19,7 @@ use std::ops::{
     Deref,
     DerefMut,
 };
+use std::ptr;
 use std::ptr::{
     NonNull,
 };
@@ -58,7 +59,24 @@ impl<T> ComponentArray<T> {
 
     #[inline]
     fn swap_remove(&mut self, index: usize) -> T {
-        todo!("IMPLEMENT ME!")
+        let (ptr, len) = self.as_raw_slice();
+        debug_assert!(index < len);
+        unsafe {
+            let item_ptr = ptr.as_ptr().add(index);
+            let last_ptr = ptr.as_ptr().add(len - 1);
+            if index < len - 1 {
+                // We are removing an item from the middle of the array. If
+                // we were removing the last item from the array (i.e. the item at 
+                // array position len - 1), there would be no need to swap to keep the 
+                // array packed, so we can just remove the last item from the 
+                // array and return it.
+                ptr::swap(item_ptr, last_ptr);
+            }
+            let last_value = ptr::read(last_ptr);
+            self.length -= 1;
+
+            last_value
+        }
     }
 
     #[inline]
