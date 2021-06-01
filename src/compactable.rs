@@ -65,6 +65,13 @@ impl<T> RawComponentArray<T> {
             }
         }
     }
+
+    fn grow(&mut self, new_capacity: usize) {
+        debug_assert!(self.capacity < new_capacity);
+        unsafe {
+            todo!("IMPLEMENT ME!")
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -114,8 +121,21 @@ impl<T> ComponentArray<T> {
         (ptr, self.length)
     }
 
+    fn grow(&mut self, new_capacity: usize) {
+        self.inner.grow(new_capacity);
+    }
+
+    fn reserve(&mut self, additonal: usize) {
+        if self.capacity < self.length + additonal {
+            self.grow(self.length + additonal);
+        }
+    }
+
     unsafe fn extend_memcopy(&mut self, ptr: *const T, count: usize) {
-        todo!("IMPLMENT ME!")
+        self.reserve(count);
+        let (dst, len) = self.as_raw_slice();
+        ptr::copy_nonoverlapping(ptr, dst.as_ptr().add(len), count);
+        self.length += count;
     }
 }
 
