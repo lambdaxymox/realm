@@ -14,6 +14,7 @@ use crate::storage::{
     ComponentMetadata,
     ComponentIndex,
 };
+use std::alloc;
 use std::mem;
 use std::ops::{
     Deref,
@@ -37,7 +38,32 @@ struct RawComponentArray<T> {
 
 impl<T> RawComponentArray<T> {
     fn with_capacity(capacity: usize) -> Self {
-        todo!("IMPLEMENT ME!")
+        if mem::size_of::<T>() == 0 {
+            Self {
+                ptr: NonNull::dangling(),
+                capacity: usize::MAX,
+            }
+        } else if capacity == 0 {
+            Self {
+                ptr: NonNull::dangling(),
+                capacity: 0,
+            }
+        } else {
+            let layout = alloc::Layout::from_size_align(
+                mem::size_of::<T>() * capacity, 
+                mem::align_of::<T>()
+            )
+            .unwrap();
+            
+            let raw_ptr = unsafe {
+                alloc::alloc(layout) as *mut T
+            };
+
+            Self {
+                ptr: NonNull::new(raw_ptr).unwrap(),
+                capacity: capacity,
+            }
+        }
     }
 }
 
@@ -57,7 +83,6 @@ impl<T> ComponentArray<T> {
         }
     }
 
-    #[inline]
     fn swap_remove(&mut self, index: usize) -> T {
         let (ptr, len) = self.as_raw_slice();
         debug_assert!(index < len);
