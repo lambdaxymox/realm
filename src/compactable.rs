@@ -303,15 +303,12 @@ where
         dst_storage.length += entity_count;
 
         if dst_storage.components[dst_index].len() == 0 {
-            // TODO: Optimize this path.
-            let (ptr, len) = self.get_bytes(src).unwrap();
-            unsafe {
-                dst_storage.extend_memcopy_raw(dst, ptr, len);
-            }
-
-            let mut swapped_components = ComponentArray::<T>::new();
-            mem::swap(&mut self.components[src_index], &mut swapped_components);
-            mem::forget(swapped_components);
+            // If the component array is empty, there is nothing to transfer,
+            // so we can just swap the arrays directly.
+            mem::swap(
+                &mut self.components[src_index], 
+                &mut dst_storage.components[dst_index]
+            );
         } else {
             let (ptr, len) = self.get_bytes(src).unwrap();
             unsafe {
