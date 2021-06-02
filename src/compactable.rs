@@ -206,6 +206,19 @@ impl<T> ops::DerefMut for ComponentArray<T> {
     }
 }
 
+impl<T> Drop for ComponentArray<T> {
+    fn drop(&mut self) {
+        if mem::needs_drop::<T>() {
+            unsafe {
+                let (ptr, len) = self.as_raw_slice();
+                for i in 0..len {
+                    ptr::drop_in_place(ptr.as_ptr().add(i));
+                }
+            }
+        }
+    }
+}
+
 
 pub struct ComponentIter<'a, T> {
     iter: Iter<'a, (NonNull<T>, usize)>,
