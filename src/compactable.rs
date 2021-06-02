@@ -229,10 +229,13 @@ where
 }
 
 pub struct ComponentIterMut<'a, T> {
-    iter: IterMut<'a, (NonNull<T>, usize)>,
+    iter: Iter<'a, (NonNull<T>, usize)>,
 }
 
-impl<'a, T> Iterator for ComponentIterMut<'a, T> {
+impl<'a, T> Iterator for ComponentIterMut<'a, T>
+where
+    T: Component,
+{
     type Item = ComponentViewMut<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -246,6 +249,7 @@ impl<'a, T> Iterator for ComponentIterMut<'a, T> {
     }
 }
 
+#[derive(Debug)]
 pub struct CompactableStorage<T: Component> {
     length: usize,
     indices: Vec<usize>,
@@ -436,28 +440,44 @@ where
     type Iter = ComponentIter<'a, T>;
     type IterMut = ComponentIterMut<'a, T>;
 
-    fn get(&self, entity_type: EntityTypeIndex) -> Option<ComponentView<'a, T>> {
-        todo!("IMPLEMENT ME!")
+    fn get(&'a self, entity_type: EntityTypeIndex) -> Option<ComponentView<'a, T>> {
+        let view_index = *self.indices.get(entity_type.id())?;
+        let (ptr, len) = self.views.get(view_index)?;
+        let view = unsafe {
+            slice::from_raw_parts(ptr.as_ptr(), *len)
+        };
+
+        Some(ComponentView::new(view))
     }
 
-    fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentViewMut<'a, T>> {
-        todo!("IMPLEMENT ME!")
+    fn get_mut(&'a self, entity_type: EntityTypeIndex) -> Option<ComponentViewMut<'a, T>> {
+        let view_index = *self.indices.get(entity_type.id())?;
+        let (ptr, len) = self.views.get(view_index)?;
+        let view = unsafe {
+            slice::from_raw_parts_mut(ptr.as_ptr(), *len)
+        };
+
+        Some(ComponentViewMut::new(view))
     }
 
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) {
         todo!("IMPLEMENT ME!")
     }
 
-    fn iter(&self) -> Self::Iter {
-        todo!("IMPLEMENT ME!")
+    fn iter(&'a self) -> Self::Iter {
+        ComponentIter {
+            iter: self.views[..].iter(),
+        }
     }
 
-    fn iter_mut(&mut self) -> Self::IterMut {
-        todo!("IMPLEMENT ME!")
+    fn iter_mut(&'a self) -> Self::IterMut {
+        ComponentIterMut {
+            iter: self.views[..].iter(),
+        }
     }
 
     fn len(&self) -> usize {
-        todo!("IMPLEMENT ME!")
+        self.components.len()
     }
 }
 

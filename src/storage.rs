@@ -415,15 +415,15 @@ pub trait ComponentStorage<'a, T: Component>: OpaqueComponentStorage + Default {
     type Iter: Iterator<Item = ComponentView<'a, T>>;
     type IterMut: Iterator<Item = ComponentViewMut<'a, T>>;
 
-    fn get(&self, entity_type: EntityTypeIndex) -> Option<ComponentView<'a, T>>;
+    fn get(&'a self, entity_type: EntityTypeIndex) -> Option<ComponentView<'a, T>>;
 
-    fn get_mut(&mut self, entity_type: EntityTypeIndex) -> Option<ComponentViewMut<'a, T>>;
+    fn get_mut(&'a self, entity_type: EntityTypeIndex) -> Option<ComponentViewMut<'a, T>>;
 
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize);
 
-    fn iter(&self) -> Self::Iter;
+    fn iter(&'a self) -> Self::Iter;
 
-    fn iter_mut(&mut self) -> Self::IterMut;
+    fn iter_mut(&'a self) -> Self::IterMut;
 
     fn len(&self) -> usize;
 
