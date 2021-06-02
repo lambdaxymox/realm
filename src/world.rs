@@ -187,7 +187,8 @@ impl<'a> EntityTypeWriter<'a> {
         entity_type_index: EntityTypeIndex,
         entity_type: &'a mut EntityType,
         components: MultiViewMut<'a>,
-    ) -> Self {
+    ) -> Self 
+    {
         let initial_count = entity_type.entities().len();
         Self {
             entity_type_index: entity_type_index,
@@ -536,20 +537,22 @@ impl World {
         &self.allocation_buffer
     }
 
-    pub fn extend_out<Src, Ext>(&mut self, components: Src, out: &mut Ext)
+    pub fn extend_out<Src, Ext>(&mut self, component_source: Src, out: &mut Ext)
     where
         Src: IntoComponentSource,
         Ext: for<'a> Extend<&'a Entity>,
     {
         let replaced_entities = {
-            let mut components = components.into();
+            let mut components = component_source.into();
             let entity_type_index = self.get_entity_type_for_components(&mut components);
             let entity_type = &mut self.entity_types[entity_type_index];
-            let writer = EntityTypeWriter::new(
+            let mut writer = EntityTypeWriter::new(
                 entity_type_index,
                 entity_type,
                 self.components.get_multi_view_mut()
             );
+            components.push_components(&mut writer, &mut self.entity_allocator);
+
             let (base, new_entities) = writer.inserted();
             let replaced = self.entities.insert(new_entities, entity_type_index, base);
             out.extend(new_entities.iter());

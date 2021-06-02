@@ -37,7 +37,6 @@ impl EntityAllocator {
 
     pub fn allocate(&mut self) -> Entity {
         if !self.available_entities.is_empty() {
-            // SAFETY: We know that the queue contains an element.
             self.available_entities.pop_front().unwrap()
         } else {
             let new_entity = Entity(self.max_id);
@@ -49,7 +48,7 @@ impl EntityAllocator {
 
     pub fn deallocate(&mut self, entity: Entity) {
         if entity.id() < self.max_id {
-            // The entity has been allocated.
+            // The entity has been previously allocated.
             self.available_entities.push_back(entity)
         }
     }
@@ -58,6 +57,20 @@ impl EntityAllocator {
 impl Default for EntityAllocator {
     fn default() -> EntityAllocator {
         EntityAllocator::new()
+    }
+}
+
+impl Iterator for EntityAllocator {
+    type Item = Entity;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.allocate())
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (usize::MAX, None)
     }
 }
 
