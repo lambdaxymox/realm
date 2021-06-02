@@ -29,6 +29,19 @@ pub struct EntityLayout {
 }
 
 impl EntityLayout {
+    pub(crate) fn new() -> EntityLayout {
+        EntityLayout::default()
+    }
+
+    pub fn register_component<T: Component + StoreComponentsIn>(&mut self) {
+        let component_type_index = ComponentTypeIndex::of::<T>();
+        assert!(
+            !self.components.contains(&component_type_index),
+        );
+        self.components.push(component_type_index);
+        self.constructors.push(|| Box::new(T::Storage::default()));
+    }
+
     pub fn component_types(&self) -> &[ComponentTypeIndex] {
         &self.components
     }

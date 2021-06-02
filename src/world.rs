@@ -334,8 +334,8 @@ where
 
 impl<T1, T2> EntityTypeSource for SingleEntity<(T1, T2)>
 where
-    T1: Component,
-    T2: Component,
+    T1: Component + StoreComponentsIn,
+    T2: Component + StoreComponentsIn,
 {
     type Filter = PairFilter<T1, T2>;
 
@@ -346,7 +346,11 @@ where
     }
 
     fn layout(&mut self) -> EntityLayout {
-        todo!("IMPLEMENT ME!")
+        let mut layout = EntityLayout::new();
+        layout.register_component::<T1>();
+        layout.register_component::<T2>();
+
+        layout
     }
 }
 
@@ -460,7 +464,7 @@ impl World {
 
     fn get_entity_type_for_components<T>(&mut self, components: &mut T) -> EntityTypeIndex 
     where
-        T: EntityTypeSource
+        T: EntityTypeSource,
     {
         let search_entities = |filter: &T::Filter| -> Option<EntityTypeIndex> {
             for entity_type in self.entity_types.iter() {
@@ -607,7 +611,7 @@ impl World {
 
 impl<T> StoreComponentsIn for T
 where
-    T: Component
+    T: Component,
 {
     type Storage = CompactableStorage<T>;
 }
