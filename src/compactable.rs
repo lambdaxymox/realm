@@ -461,7 +461,7 @@ where
     }
 
     unsafe fn extend_memcopy(&mut self, entity_type: EntityTypeIndex, ptr: *const T, len: usize) {
-        todo!("IMPLEMENT ME!")
+        self.extend_memcopy_raw(entity_type, ptr as *const u8, len);
     }
 
     fn iter(&'a self) -> Self::Iter {
