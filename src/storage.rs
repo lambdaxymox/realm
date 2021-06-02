@@ -181,6 +181,14 @@ pub struct EntityLocation {
 
 impl EntityLocation {
     #[inline]
+    pub(crate) fn new(type_id: EntityTypeIndex, component_id: ComponentIndex) -> Self {
+        Self {
+            type_id: type_id,
+            component_id: component_id,
+        }
+    }
+
+    #[inline]
     pub fn entity_type(self) -> EntityTypeIndex {
         self.type_id
     }
@@ -209,9 +217,20 @@ impl EntityLocationMap {
         entities: &[Entity],
         entity_type: EntityTypeIndex, 
         base: ComponentIndex
-    ) -> Option<EntityLocation>
+    ) -> Vec<EntityLocation>
     {
-        todo!("IMPLEMENT ME!")
+        let mut removed_entities = Vec::new();
+        for (i, entity) in entities.iter().enumerate() {
+            let location = EntityLocation::new(
+                entity_type, 
+                ComponentIndex::new(base.id() + i)
+            );
+            if let Some(existing_location) = self.locations.insert(*entity, location) {
+                removed_entities.push(existing_location);
+            }
+        }
+
+        removed_entities
     }
 
     pub fn len(&self) -> usize {
