@@ -106,6 +106,21 @@ impl<T> RawComponentArray<T> {
     }
 }
 
+impl<T> Drop for RawComponentArray<T> {
+    fn drop(&mut self) {
+        if (mem::size_of::<T>() != 0) && (self.capacity > 0) {
+            unsafe {
+                let layout = alloc::Layout::from_size_align_unchecked(
+                    mem::size_of::<T>() * self.capacity,
+                    mem::align_of::<T>(),
+                );
+
+                alloc::dealloc(self.ptr.as_ptr() as *mut u8, layout);
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 struct ComponentArray<T> {
     inner: RawComponentArray<T>,
