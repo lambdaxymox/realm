@@ -16,10 +16,7 @@ use crate::storage::{
 };
 use std::alloc;
 use std::mem;
-use std::ops::{
-    Deref,
-    DerefMut,
-};
+use std::ops;
 use std::ptr;
 use std::ptr::{
     NonNull,
@@ -69,7 +66,42 @@ impl<T> RawComponentArray<T> {
     fn grow(&mut self, new_capacity: usize) {
         debug_assert!(self.capacity < new_capacity);
         unsafe {
-            todo!("IMPLEMENT ME!")
+            let dst_ptr = if self.capacity == 0 {
+                // If the old capacity is zero, we allocated zero space in the old allocation.
+                let layout = alloc::Layout::from_size_align(
+                    mem::size_of::<T>() * new_capacity,
+                    mem::align_of::<T>()
+                )
+                .unwrap();
+                let new_allocation = alloc::alloc(layout);
+                
+                new_allocation as *mut T
+            } else {
+                let layout = alloc::Layout::from_size_align(
+                    mem::size_of::<T>() * new_capacity, 
+                    mem::align_of::<T>()
+                )
+                .unwrap();
+
+                let new_allocation = alloc::realloc(
+                    self.ptr.as_ptr() as *mut u8,
+                    layout,
+                    mem::size_of::<T>() * new_capacity
+                );
+                
+                new_allocation as *mut T
+            };
+            if let Some(new_ptr) = NonNull::new(dst_ptr) {
+                self.ptr = new_ptr;
+                self.capacity = new_capacity;
+            } else {
+                let layout = alloc::Layout::from_size_align_unchecked(
+                    mem::size_of::<T>() * new_capacity, 
+                    mem::align_of::<T>()
+                );
+
+                alloc::handle_alloc_error(layout)
+            }
         }
     }
 }
@@ -139,7 +171,7 @@ impl<T> ComponentArray<T> {
     }
 }
 
-impl<T> Deref for ComponentArray<T> {
+impl<T> ops::Deref for ComponentArray<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -150,7 +182,7 @@ impl<T> Deref for ComponentArray<T> {
     }
 }
 
-impl<T> DerefMut for ComponentArray<T> {
+impl<T> ops::DerefMut for ComponentArray<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let (ptr, len) = self.as_raw_slice();
         unsafe {
