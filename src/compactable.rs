@@ -208,7 +208,7 @@ impl<T> ops::DerefMut for ComponentArray<T> {
 
 
 pub struct ComponentIter<'a, T> {
-    iter: Iter<'a, ComponentView<'a, T>>,
+    iter: Iter<'a, (NonNull<T>, usize)>,
 }
 
 impl<'a, T> Iterator for ComponentIter<'a, T> 
@@ -218,19 +218,31 @@ where
     type Item = ComponentView<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().cloned()
+        self.iter.next().map(|(ptr, len)| {
+            let view = unsafe {
+                slice::from_raw_parts(ptr.as_ptr(), *len)
+            };
+
+            ComponentView::new(view)
+        })
     }
 }
 
 pub struct ComponentIterMut<'a, T> {
-    _marker: std::marker::PhantomData<&'a T>,
+    iter: IterMut<'a, (NonNull<T>, usize)>,
 }
 
 impl<'a, T> Iterator for ComponentIterMut<'a, T> {
     type Item = ComponentViewMut<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!("IMPLEMENT ME!")
+        self.iter.next().map(|(ptr, len)| {
+            let view = unsafe {
+                slice::from_raw_parts_mut(ptr.as_ptr(), *len)
+            };
+
+            ComponentViewMut::new(view)
+        })
     }
 }
 

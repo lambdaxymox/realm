@@ -237,7 +237,7 @@ pub struct ComponentView<'a, T> {
 
 impl<'a, T> ComponentView<'a, T>{
     #[inline]
-    fn new(slice: &'a [T]) -> ComponentView<'a, T> {
+    pub (crate) fn new(slice: &'a [T]) -> ComponentView<'a, T> {
         ComponentView {
             slice: slice,
         }
@@ -284,7 +284,7 @@ pub struct ComponentViewMut<'a, T> {
 
 impl<'a, T> ComponentViewMut<'a, T>{
     #[inline]
-    fn new(slice: &'a mut [T]) -> ComponentViewMut<'a, T> {
+    pub(crate) fn new(slice: &'a mut [T]) -> ComponentViewMut<'a, T> {
         ComponentViewMut {
             slice: slice,
         }
