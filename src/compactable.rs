@@ -275,7 +275,7 @@ unsafe impl<T: Component> Sync for CompactableStorage<T> {}
 
 impl<T> CompactableStorage<T>
 where
-    T: Component
+    T: Component,
 {
     fn swap_remove_internal(
         &mut self, 
@@ -317,7 +317,7 @@ where
 
 impl<T> OpaqueComponentStorage for CompactableStorage<T>
 where
-    T: Component
+    T: Component,
 {
     fn metadata(&self) -> ComponentMetadata {
         ComponentMetadata::of::<T>()
