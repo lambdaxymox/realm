@@ -105,7 +105,6 @@ impl EntityType {
         self.index
     }
 
-    #[inline]
     pub(crate) fn layout(&self) -> &Arc<EntityLayout> {
         &self.layout
     }
@@ -116,6 +115,10 @@ impl EntityType {
 
     pub(crate) fn contains_component_value(&self, index: usize) -> bool {
         index < self.entities.len()
+    }
+
+    pub(crate) fn push(&mut self, entity: Entity) {
+        self.entities.push(entity);
     }
 }
 

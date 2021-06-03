@@ -199,8 +199,9 @@ impl<'a> EntityTypeWriter<'a> {
         }
     }
 
+    /// Push an entity to the entity type collection.
     pub fn push(&mut self, entity: Entity) {
-        todo!("IMPLEMENT ME!")
+        self.entity_type.push(entity);
     }
 
     pub fn claim_components<T: Component + StoreComponentsIn>(&mut self) -> ComponentWriter<'a, T> {
