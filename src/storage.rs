@@ -460,6 +460,7 @@ pub trait ComponentStorage<'a, T: Component>: OpaqueComponentStorage + Default {
 
     fn iter_mut(&'a self) -> Self::IterMut;
 
+    /// Return the number of entity type views in the storage.
     fn len(&self) -> usize;
 
     fn is_empty(&self) -> bool {

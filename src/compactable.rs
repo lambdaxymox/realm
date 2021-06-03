@@ -349,7 +349,6 @@ where
         self.length += count;
     }
 
-    /// Move a component from one entity type to another entity type.
     fn move_component(
         &mut self,
         src: EntityTypeIndex,
@@ -373,7 +372,6 @@ where
         mem::forget(value);
     }
 
-    /// Move a component from one storage to another storage.
     fn transfer_component(
         &mut self,
         src: EntityTypeIndex,
@@ -392,7 +390,6 @@ where
         mem::forget(component);
     }
 
-    /// Create a new slice for the given Entity type.
     fn insert_entity_type(&mut self, entity_type_index: EntityTypeIndex) {
         let view_index = self.views.len();
         let component_array = ComponentArray::<T>::new();
@@ -407,8 +404,6 @@ where
         self.indices[entity_type_index.id()] = view_index;
     }
 
-    /// Move all the components of a given entity type from one storage to the
-    /// other storage.
     fn transfer_entity_type(
         &mut self,
         src: EntityTypeIndex, 
@@ -501,10 +496,12 @@ mod tests {
         EntityTypeIndex,
         OpaqueComponentStorage,
         ComponentStorage,
+        ComponentIndex,
     };
     use super::{
         CompactableStorage,
     };
+    use std::mem;
 
 
     #[test]
@@ -528,6 +525,96 @@ mod tests {
         storage.insert_entity_type(entity_type_index);
 
         assert!(storage.get(entity_type_index).is_some());
+    }
+
+    #[test]
+    fn test_insert_entity_type_zero_sized_type() {
+        let mut storage = CompactableStorage::<()>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+
+        assert!(storage.get(entity_type_index).is_some());
+    }
+
+    #[test]
+    fn test_swap_remove_last() {
+        let mut storage = CompactableStorage::<usize>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+
+        unsafe {
+            let components = vec![1, 2, 3, 4, 5];
+            let ptr = components.as_ptr();
+            storage.extend_memcopy(entity_type_index, ptr, 5);
+            mem::forget(components);
+        }
+
+        storage.swap_remove(entity_type_index, ComponentIndex::new(4));
+        let view = storage.get(entity_type_index).unwrap();
+        let result = view.into_slice();
+        let expected = vec![1_usize, 2_usize, 3_usize, 4_usize];
+
+        assert_eq!(result, &expected);
+    }
+
+    #[test]
+    fn test_swap_remove_first() {
+        let mut storage = CompactableStorage::<usize>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+
+        unsafe {
+            let components = vec![1, 2, 3, 4, 5];
+            let ptr = components.as_ptr();
+            storage.extend_memcopy(entity_type_index, ptr, 5);
+            mem::forget(components);
+        }
+
+        storage.swap_remove(entity_type_index, ComponentIndex::new(0));
+        let view = storage.get(entity_type_index).unwrap();
+        let result = view.into_slice();
+        let expected = vec![5_usize, 2_usize, 3_usize, 4_usize];
+
+        assert_eq!(result, &expected);
+    }
+
+    #[test]
+    fn test_swap_remove_middle() {
+        let mut storage = CompactableStorage::<usize>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+
+        unsafe {
+            let components = vec![1, 2, 3, 4, 5];
+            let ptr = components.as_ptr();
+            storage.extend_memcopy(entity_type_index, ptr, 5);
+            mem::forget(components);
+        }
+
+        storage.swap_remove(entity_type_index, ComponentIndex::new(2));
+        let view = storage.get(entity_type_index).unwrap();
+        let result = view.into_slice();
+        let expected = vec![1_usize, 2_usize, 5_usize, 4_usize];
+
+        assert_eq!(result, &expected);
+    }
+
+    #[test]
+    fn test_storage_len() {
+        let mut storage = CompactableStorage::<usize>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+        storage.insert_entity_type(EntityTypeIndex::new(1));
+        storage.insert_entity_type(EntityTypeIndex::new(2));
+
+        unsafe {
+            let components = vec![1, 2, 3, 4, 5];
+            let ptr = components.as_ptr();
+            storage.extend_memcopy(entity_type_index, ptr, components.len());
+            mem::forget(components);
+        }
+
+        assert_eq!(storage.len(), 3);
     }
 }
 
