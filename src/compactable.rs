@@ -494,3 +494,40 @@ where
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use crate::storage::{
+        EntityTypeIndex,
+        OpaqueComponentStorage,
+        ComponentStorage,
+    };
+    use super::{
+        CompactableStorage,
+    };
+
+
+    #[test]
+    fn test_empty_compactable_storage_storage() {
+        let storage = CompactableStorage::<usize>::default();
+
+        assert!(storage.is_empty());
+    }
+
+    #[test]
+    fn test_empty_compactable_storage_zero_sized_type() {
+        let storage = CompactableStorage::<()>::default();
+
+        assert!(storage.is_empty());
+    }
+
+    #[test]
+    fn test_insert_entity_type() {
+        let mut storage = CompactableStorage::<usize>::default();
+        let entity_type_index = EntityTypeIndex::new(0);
+        storage.insert_entity_type(entity_type_index);
+
+        assert!(storage.get(entity_type_index).is_some());
+    }
+}
+
