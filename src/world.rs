@@ -55,7 +55,7 @@ impl ComponentMap {
     {
         let new_storage = self.data
             .entry(index)
-            .or_insert_with(|| constructor());
+            .or_insert_with(constructor);
         
         new_storage.deref_mut()
     }
