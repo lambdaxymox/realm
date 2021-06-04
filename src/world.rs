@@ -504,7 +504,12 @@ impl World {
 
         for missing_component in missing_components.iter() {
             self.components.get_or_insert_with(*missing_component, || { 
-                entity_type.layout().get_constructor_unchecked(*missing_component)()
+                let mut storage = entity_type
+                    .layout()
+                    .get_constructor_unchecked(*missing_component)();
+                storage.insert_entity_type(entity_type_index);
+
+                storage
             });
         }
 
