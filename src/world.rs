@@ -479,11 +479,13 @@ impl World {
         };
 
         let index = search_entities(&components.filter());
-        if let Some(value) = index {
+        let entity_type_index = if let Some(value) = index {
             value
         } else {
             self.insert_entity_type(components.layout())
-        }
+        };
+
+        entity_type_index
     }
 
     fn insert_entity_type(&mut self, layout: EntityLayout) -> EntityTypeIndex {
