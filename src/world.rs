@@ -617,6 +617,12 @@ impl World {
     pub fn entity_types(&self) -> &[EntityType] {
         &self.entity_types
     }
+
+    pub fn entry(&mut self, entity: Entity) -> Option<Entry> {
+        self.entities
+            .get(entity)
+            .map(move |location| Entry::new(location, self))
+    }
 }
 
 
